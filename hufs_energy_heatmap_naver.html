@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>에너지맵 — 한국외대 글로벌캠퍼스</title>
+<script src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId=825xps0pwx"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Noto Sans KR','Segoe UI',sans-serif;background:#f5f5f5;height:100vh;overflow:hidden;}
+#app{display:flex;height:100vh;position:relative;}
+
+/* 좌측 랭킹 패널 */
+#sidebar{width:300px;flex-shrink:0;background:#fff;display:flex;flex-direction:column;z-index:10;box-shadow:2px 0 12px rgba(0,0,0,0.08);}
+#sidebar-header{padding:18px 16px 14px;border-bottom:1px solid #f0f0f0;}
+#sidebar-header h1{font-size:17px;font-weight:700;color:#111;letter-spacing:-0.3px;}
+#sidebar-header p{font-size:12px;color:#888;margin-top:3px;}
+.tab-row{display:flex;padding:10px 16px 0;border-bottom:1px solid #f0f0f0;}
+.tab{font-size:13px;font-weight:600;padding:8px 14px;cursor:pointer;color:#03c75a;border-bottom:2px solid #03c75a;}
+#ranking-list{flex:1;overflow-y:auto;padding:8px 0;}
+.rank-item{display:flex;align-items:center;gap:10px;padding:11px 16px;cursor:pointer;transition:background 0.1s;border-left:3px solid transparent;}
+.rank-item:hover{background:#f8f8f8;}
+.rank-item.active{background:#f0fdf6;border-left-color:#03c75a;}
+.rank-num{font-size:13px;font-weight:700;color:#aaa;width:20px;text-align:center;flex-shrink:0;}
+.rank-num.top1{color:#ff4444;}
+.rank-num.top2{color:#ff8800;}
+.rank-num.top3{color:#ffaa00;}
+.rank-info{flex:1;min-width:0;}
+.rank-name{font-size:14px;font-weight:600;color:#222;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.rank-sub{font-size:11px;color:#888;margin-top:2px;}
+.rank-right{text-align:right;flex-shrink:0;}
+.rank-kcal{font-size:14px;font-weight:700;color:#111;}
+.rank-range{font-size:10px;color:#aaa;margin-top:2px;}
+.risk-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.risk-dot.HIGH{background:#ff4444;}
+.risk-dot.MEDIUM{background:#ff8800;}
+.risk-dot.LOW{background:#03c75a;}
+
+/* 지도 영역 */
+#map-wrap{flex:1;position:relative;}
+#map{width:100%;height:100%;}
+
+/* 토글 버튼 */
+#toggle-bar{position:absolute;top:14px;right:14px;z-index:100;display:flex;gap:6px;}
+.toggle-btn{background:#fff;border:1px solid #e0e0e0;border-radius:20px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;color:#555;box-shadow:0 1px 4px rgba(0,0,0,0.12);transition:all 0.15s;}
+.toggle-btn.on{background:#03c75a;color:#fff;border-color:#03c75a;}
+
+/* 범례 */
+#legend{position:absolute;bottom:60px;right:14px;z-index:100;background:#fff;border-radius:10px;padding:12px 14px;box-shadow:0 2px 10px rgba(0,0,0,0.12);font-size:12px;}
+#legend h4{font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px;}
+.leg-row{display:flex;align-items:center;gap:7px;margin-bottom:5px;color:#444;}
+.leg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.leg-dot.HIGH{background:#ff4444;}
+.leg-dot.MEDIUM{background:#ff8800;}
+.leg-dot.LOW{background:#03c75a;}
+
+/* 상세 패널 */
+#detail{position:absolute;bottom:20px;left:16px;z-index:100;background:#fff;border-radius:12px;padding:16px 18px;box-shadow:0 4px 20px rgba(0,0,0,0.15);width:270px;display:none;}
+#detail-close{position:absolute;top:10px;right:12px;background:none;border:none;font-size:20px;color:#aaa;cursor:pointer;line-height:1;}
+#detail-close:hover{color:#444;}
+#d-name{font-size:15px;font-weight:700;color:#111;margin-bottom:2px;}
+#d-mode{font-size:12px;color:#888;margin-bottom:12px;}
+.d-stat-row{display:flex;gap:8px;margin-bottom:10px;}
+.d-stat{flex:1;background:#f8f8f8;border-radius:8px;padding:9px 10px;}
+.d-stat-label{font-size:10px;color:#888;margin-bottom:3px;}
+.d-stat-val{font-size:16px;font-weight:700;color:#111;}
+.d-stat-unit{font-size:10px;color:#888;}
+.d-range-wrap{margin:8px 0 4px;}
+.d-range-label{font-size:11px;color:#888;margin-bottom:5px;}
+.d-range-bar{height:6px;background:#f0f0f0;border-radius:3px;position:relative;overflow:hidden;}
+.d-range-fill{height:100%;border-radius:3px;position:absolute;top:0;}
+.d-range-ticks{display:flex;justify-content:space-between;font-size:10px;color:#aaa;margin-top:3px;}
+.d-info-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f5f5f5;font-size:12px;}
+.d-info-row:last-child{border:none;}
+.d-key{color:#888;}
+.d-val{font-weight:600;color:#333;}
+.risk-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;}
+.badge-HIGH{background:#fff0f0;color:#ff4444;}
+.badge-MEDIUM{background:#fff7f0;color:#ff8800;}
+.badge-LOW{background:#f0fff6;color:#03c75a;}
+
+/* 네이버 지도 버블 마커 */
+.nv-bubble{display:flex;flex-direction:column;align-items:center;cursor:pointer;transform:translate(-50%,-100%);}
+.nv-bubble-box{background:#fff;border-radius:8px;padding:5px 10px;white-space:nowrap;text-align:center;position:relative;transition:transform 0.15s;}
+.nv-bubble-box:hover{transform:scale(1.06);}
+.nv-bubble-box::after{content:'';position:absolute;bottom:-7px;left:50%;transform:translateX(-50%);border:4px solid transparent;}
+.nv-bubble-box.HIGH{border:2px solid #ff4444;box-shadow:0 2px 8px rgba(255,68,68,0.25);}
+.nv-bubble-box.HIGH::after{border-top-color:#ff4444;}
+.nv-bubble-box.MEDIUM{border:2px solid #ff8800;box-shadow:0 2px 8px rgba(255,136,0,0.25);}
+.nv-bubble-box.MEDIUM::after{border-top-color:#ff8800;}
+.nv-bubble-box.LOW{border:2px solid #03c75a;box-shadow:0 2px 8px rgba(3,199,90,0.2);}
+.nv-bubble-box.LOW::after{border-top-color:#03c75a;}
+.nv-bname{font-size:9px;font-weight:700;color:#555;margin-bottom:2px;}
+.nv-brange{font-size:11px;font-weight:700;color:#111;}
+.nv-bunit{font-size:9px;color:#888;font-weight:400;}
+.nv-dot{width:8px;height:8px;border-radius:50%;margin-top:2px;}
+.nv-dot.HIGH{background:#ff4444;}
+.nv-dot.MEDIUM{background:#ff8800;}
+.nv-dot.LOW{background:#03c75a;}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="sidebar">
+    <div id="sidebar-header">
+      <h1>⚡ 에너지맵</h1>
+      <p>한국외대 글로벌캠퍼스 · 배송 에너지 소비 예측</p>
+    </div>
+    <div class="tab-row"><div class="tab">에너지 높은 순</div></div>
+    <div id="ranking-list"></div>
+  </div>
+
+  <div id="map-wrap">
+    <div id="map"></div>
+    <div id="toggle-bar">
+      <button class="toggle-btn on" id="btn-heat" onclick="toggleHeat()">히트맵</button>
+      <button class="toggle-btn on" id="btn-bubble" onclick="toggleBubble()">버블</button>
+    </div>
+    <div id="legend">
+      <h4>위험 등급</h4>
+      <div class="leg-row"><div class="leg-dot HIGH"></div>HIGH (&gt; 25 kcal)</div>
+      <div class="leg-row"><div class="leg-dot MEDIUM"></div>MEDIUM (9.5 ~ 25)</div>
+      <div class="leg-row"><div class="leg-dot LOW"></div>LOW (&lt; 9.5 kcal)</div>
+    </div>
+    <div id="detail">
+      <button id="detail-close" onclick="closeDetail()">×</button>
+      <div id="d-name"></div>
+      <div id="d-mode"></div>
+      <div class="d-stat-row">
+        <div class="d-stat"><div class="d-stat-label">평균 에너지</div><div class="d-stat-val" id="d-mean"></div><div class="d-stat-unit">kcal / 배송</div></div>
+        <div class="d-stat"><div class="d-stat-label">위험 등급</div><div style="margin-top:5px" id="d-risk"></div></div>
+      </div>
+      <div class="d-range-wrap">
+        <div class="d-range-label">P10 ~ P90 예측 범위</div>
+        <div class="d-range-bar"><div class="d-range-fill" id="d-bar"></div></div>
+        <div class="d-range-ticks"><span id="d-p10"></span><span id="d-p90"></span></div>
+      </div>
+      <div style="margin-top:12px;">
+        <div class="d-info-row"><span class="d-key">최고층</span><span class="d-val" id="d-floor"></span></div>
+        <div class="d-info-row"><span class="d-key">엘리베이터</span><span class="d-val" id="d-elev"></span></div>
+        <div class="d-info-row"><span class="d-key">배송방식</span><span class="d-val" id="d-dm"></span></div>
+        <div class="d-info-row"><span class="d-key">보관층</span><span class="d-val" id="d-sf"></span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const DATA = [
+  {building:"백년관",lat:37.33820,lng:127.26600,mean_kcal:43.26,p10_kcal:35.65,p90_kcal:51.29,risk:"HIGH",delivery_mode:"floor_delivery",max_floor:11,has_elevator:true,storage_floor:null},
+  {building:"어문학관",lat:37.33950,lng:127.26320,mean_kcal:41.50,p10_kcal:27.79,p90_kcal:56.17,risk:"HIGH",delivery_mode:"floor_delivery",max_floor:5,has_elevator:false,storage_floor:null},
+  {building:"공학관",lat:37.33891,lng:127.26445,mean_kcal:31.40,p10_kcal:15.46,p90_kcal:46.49,risk:"HIGH",delivery_mode:"mixed",max_floor:5,has_elevator:false,storage_floor:2},
+  {building:"기숙사_E동",lat:37.33540,lng:127.26290,mean_kcal:19.18,p10_kcal:15.62,p90_kcal:22.92,risk:"MEDIUM",delivery_mode:"storage",max_floor:4,has_elevator:false,storage_floor:1},
+  {building:"기숙사_C동",lat:37.33450,lng:127.26430,mean_kcal:19.13,p10_kcal:15.31,p90_kcal:23.05,risk:"MEDIUM",delivery_mode:"storage",max_floor:8,has_elevator:true,storage_floor:1},
+  {building:"기숙사_D동",lat:37.33580,lng:127.26350,mean_kcal:19.12,p10_kcal:15.48,p90_kcal:23.01,risk:"MEDIUM",delivery_mode:"storage",max_floor:4,has_elevator:false,storage_floor:1},
+  {building:"기숙사_A동",lat:37.33530,lng:127.26550,mean_kcal:19.07,p10_kcal:15.40,p90_kcal:23.01,risk:"MEDIUM",delivery_mode:"storage",max_floor:8,has_elevator:true,storage_floor:1},
+  {building:"기숙사_B동",lat:37.33490,lng:127.26490,mean_kcal:18.96,p10_kcal:15.19,p90_kcal:22.92,risk:"MEDIUM",delivery_mode:"storage",max_floor:8,has_elevator:true,storage_floor:1},
+  {building:"자연과학관",lat:37.33840,lng:127.26380,mean_kcal:13.63,p10_kcal:9.56,p90_kcal:17.90,risk:"MEDIUM",delivery_mode:"floor_delivery",max_floor:5,has_elevator:true,storage_floor:null},
+  {building:"인문경상관",lat:37.33720,lng:127.26480,mean_kcal:4.97,p10_kcal:2.64,p90_kcal:6.93,risk:"LOW",delivery_mode:"storage",max_floor:4,has_elevator:false,storage_floor:1},
+  {building:"학생회관",lat:37.33700,lng:127.26280,mean_kcal:4.94,p10_kcal:2.69,p90_kcal:6.80,risk:"LOW",delivery_mode:"storage",max_floor:4,has_elevator:false,storage_floor:1},
+  {building:"창업보육센터",lat:37.33760,lng:127.26100,mean_kcal:4.93,p10_kcal:3.54,p90_kcal:6.80,risk:"LOW",delivery_mode:"storage",max_floor:4,has_elevator:false,storage_floor:1},
+  {building:"교양관",lat:37.33780,lng:127.26200,mean_kcal:4.86,p10_kcal:2.55,p90_kcal:6.79,risk:"LOW",delivery_mode:"storage",max_floor:5,has_elevator:true,storage_floor:1},
+  {building:"후생복지관",lat:37.33660,lng:127.26180,mean_kcal:4.84,p10_kcal:2.48,p90_kcal:6.73,risk:"LOW",delivery_mode:"storage",max_floor:4,has_elevator:false,storage_floor:1}
+];
+
+const MODE_KR={storage:"보관소 집중",floor_delivery:"층별 직접배송",mixed:"혼합"};
+const RISK_COLOR={HIGH:"#ff4444",MEDIUM:"#ff8800",LOW:"#03c75a"};
+const RISK_RGBA={HIGH:"rgba(255,68,68,",MEDIUM:"rgba(255,136,0,",LOW:"rgba(3,199,90,"};
+const maxKcal=Math.max(...DATA.map(d=>d.mean_kcal));
+
+// 네이버 지도 초기화
+const map=new naver.maps.Map('map',{
+  center:new naver.maps.LatLng(37.33710,127.26380),
+  zoom:16,
+  mapTypeId:naver.maps.MapTypeId.NORMAL
+});
+
+// 히트맵 — Circle 오버레이 방식 (안정적)
+let showHeat=true,showBubble=true;
+
+const heatCircles=[];
+DATA.forEach(d=>{
+  const opacity=0.12+(d.mean_kcal/maxKcal)*0.35;
+  const radius=130+(d.mean_kcal/maxKcal)*200;
+  const c1=new naver.maps.Circle({map,center:new naver.maps.LatLng(d.lat,d.lng),radius,fillColor:RISK_COLOR[d.risk],fillOpacity:opacity,strokeWeight:0});
+  const c2=new naver.maps.Circle({map,center:new naver.maps.LatLng(d.lat,d.lng),radius:radius*0.45,fillColor:RISK_COLOR[d.risk],fillOpacity:opacity*0.9,strokeWeight:0});
+  heatCircles.push(c1,c2);
+});
+
+// 버블 마커
+const markers=[];
+DATA.forEach((d,i)=>{
+  const html=`
+    <div class="nv-bubble">
+      <div class="nv-bubble-box ${d.risk}">
+        <div class="nv-bname">${d.building}</div>
+        <div class="nv-brange">${d.p10_kcal.toFixed(1)}<span class="nv-bunit"> ~ </span>${d.p90_kcal.toFixed(1)}<span class="nv-bunit"> kcal</span></div>
+      </div>
+      <div class="nv-dot ${d.risk}"></div>
+    </div>`;
+  const marker=new naver.maps.Marker({
+    position:new naver.maps.LatLng(d.lat,d.lng),
+    map:map,
+    icon:{content:html,anchor:new naver.maps.Point(60,52)}
+  });
+  naver.maps.Event.addListener(marker,'click',()=>openDetail(d,i));
+  markers.push(marker);
+});
+
+function toggleHeat(){
+  showHeat=!showHeat;
+  heatCircles.forEach(c=>c.setMap(showHeat?map:null));
+  document.getElementById('btn-heat').classList.toggle('on',showHeat);
+}
+function toggleBubble(){
+  showBubble=!showBubble;
+  markers.forEach(m=>m.setMap(showBubble?map:null));
+  document.getElementById('btn-bubble').classList.toggle('on',showBubble);
+}
+
+// 상세 패널
+function openDetail(d,i){
+  document.getElementById('d-name').textContent=d.building;
+  document.getElementById('d-mode').textContent=MODE_KR[d.delivery_mode]||d.delivery_mode;
+  document.getElementById('d-mean').textContent=d.mean_kcal.toFixed(1);
+  document.getElementById('d-risk').innerHTML=`<span class="risk-badge badge-${d.risk}">${d.risk}</span>`;
+  const fw=(d.mean_kcal/maxKcal*100).toFixed(0);
+  document.getElementById('d-bar').style.cssText=`width:${fw}%;background:${RISK_COLOR[d.risk]};opacity:0.8;`;
+  document.getElementById('d-p10').textContent=d.p10_kcal.toFixed(1)+' kcal';
+  document.getElementById('d-p90').textContent=d.p90_kcal.toFixed(1)+' kcal';
+  document.getElementById('d-floor').textContent=d.max_floor+'층';
+  document.getElementById('d-elev').textContent=d.has_elevator?'있음 🛗':'없음';
+  document.getElementById('d-dm').textContent=MODE_KR[d.delivery_mode];
+  document.getElementById('d-sf').textContent=d.storage_floor!=null?d.storage_floor+'층':'—';
+  document.getElementById('detail').style.display='block';
+  document.querySelectorAll('.rank-item').forEach(el=>el.classList.remove('active'));
+  const t=document.querySelector(`.rank-item[data-i="${i}"]`);
+  if(t){t.classList.add('active');t.scrollIntoView({block:'nearest',behavior:'smooth'});}
+}
+function closeDetail(){
+  document.getElementById('detail').style.display='none';
+  document.querySelectorAll('.rank-item').forEach(el=>el.classList.remove('active'));
+}
+
+// 랭킹 패널
+const list=document.getElementById('ranking-list');
+DATA.forEach((d,i)=>{
+  const nc=i===0?'top1':i===1?'top2':i===2?'top3':'';
+  const el=document.createElement('div');
+  el.className='rank-item'; el.dataset.i=i;
+  el.innerHTML=`
+    <div class="rank-num ${nc}">${i+1}</div>
+    <div class="risk-dot ${d.risk}"></div>
+    <div class="rank-info">
+      <div class="rank-name">${d.building}</div>
+      <div class="rank-sub">${MODE_KR[d.delivery_mode]} · ${d.max_floor}층</div>
+    </div>
+    <div class="rank-right">
+      <div class="rank-kcal">${d.mean_kcal.toFixed(1)} kcal</div>
+      <div class="rank-range">${d.p10_kcal.toFixed(1)} ~ ${d.p90_kcal.toFixed(1)}</div>
+    </div>`;
+  el.addEventListener('click',()=>{
+    map.setCenter(new naver.maps.LatLng(d.lat,d.lng));
+    map.setZoom(17);
+    setTimeout(()=>openDetail(d,i),200);
+  });
+  list.appendChild(el);
+});
+</script>
+</body>
+</html>
