@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>에너지맵 — 한국외대 글로벌캠퍼스</title>
+<script src="https://openapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=825xps0pwx&submodules=visualization"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Noto Sans KR','Segoe UI',sans-serif;background:#f5f5f5;height:100vh;overflow:hidden;}
+#app{display:flex;height:100vh;}
+#sidebar{width:300px;flex-shrink:0;background:#fff;display:flex;flex-direction:column;z-index:10;box-shadow:2px 0 12px rgba(0,0,0,0.08);}
+#sidebar-header{padding:18px 16px 14px;border-bottom:1px solid #f0f0f0;}
+#sidebar-header h1{font-size:17px;font-weight:700;color:#111;letter-spacing:-.3px;}
+#sidebar-header p{font-size:12px;color:#888;margin-top:3px;}
+.tab-row{padding:10px 16px 0;border-bottom:1px solid #f0f0f0;}
+.tab{font-size:13px;font-weight:600;padding:8px 14px;color:#03c75a;border-bottom:2px solid #03c75a;display:inline-block;}
+#ranking-list{flex:1;overflow-y:auto;padding:8px 0;}
+.rank-item{display:flex;align-items:center;gap:10px;padding:11px 16px;cursor:pointer;transition:background .1s;border-left:3px solid transparent;}
+.rank-item:hover{background:#f8f8f8;}
+.rank-item.active{background:#f0fdf6;border-left-color:#03c75a;}
+.rank-num{font-size:12px;font-weight:700;color:#aaa;width:18px;text-align:center;flex-shrink:0;}
+.rank-num.r1{color:#ff4444;}.rank-num.r2{color:#ff8800;}.rank-num.r3{color:#ffaa00;}
+.rdot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.rinfo{flex:1;min-width:0;}
+.rname{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.rsub{font-size:11px;color:#888;margin-top:1px;}
+.rright{text-align:right;flex-shrink:0;}
+.rkcal{font-size:13px;font-weight:700;}
+.rrange{font-size:10px;color:#aaa;margin-top:1px;}
+#map-wrap{flex:1;position:relative;}
+#map{width:100%;height:100%;}
+#zoom-badge{position:absolute;top:14px;left:50%;transform:translateX(-50%);z-index:500;background:#fff;border:1px solid #e0e0e0;border-radius:20px;padding:6px 16px;font-size:12px;font-weight:600;color:#555;box-shadow:0 1px 4px rgba(0,0,0,.12);pointer-events:none;transition:all .2s;}
+#zoom-badge.region{background:#1d4ed8;color:#fff;border-color:#1d4ed8;}
+#zoom-badge.building{background:#03c75a;color:#fff;border-color:#03c75a;}
+#toggle-bar{position:absolute;top:14px;right:14px;z-index:500;display:flex;gap:6px;}
+.tbtn{background:#fff;border:1px solid #e0e0e0;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;color:#555;box-shadow:0 1px 4px rgba(0,0,0,.1);transition:all .15s;}
+.tbtn.on{background:#03c75a;color:#fff;border-color:#03c75a;}
+#legend{position:absolute;bottom:30px;right:14px;z-index:500;background:#fff;border-radius:10px;padding:12px 14px;box-shadow:0 2px 10px rgba(0,0,0,.12);font-size:12px;}
+#legend h4{font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.4px;margin-bottom:7px;}
+.lrow{display:flex;align-items:center;gap:6px;margin-bottom:4px;color:#444;}
+.ldot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+#detail{position:absolute;bottom:20px;left:16px;z-index:500;background:#fff;border-radius:12px;padding:16px 18px;box-shadow:0 4px 20px rgba(0,0,0,.15);width:270px;display:none;}
+#dc{position:absolute;top:10px;right:12px;background:none;border:none;font-size:20px;color:#aaa;cursor:pointer;}
+#dn{font-size:15px;font-weight:700;margin-bottom:2px;}
+#dm{font-size:12px;color:#888;margin-bottom:12px;}
+.dsr{display:flex;gap:8px;margin-bottom:10px;}
+.ds{flex:1;background:#f8f8f8;border-radius:8px;padding:9px 10px;}
+.dsl{font-size:10px;color:#888;margin-bottom:3px;}
+.dsv{font-size:16px;font-weight:700;}
+.dsu{font-size:10px;color:#888;}
+.drb{height:5px;background:#f0f0f0;border-radius:3px;overflow:hidden;margin:8px 0 3px;}
+.drf{height:100%;border-radius:3px;}
+.drt{display:flex;justify-content:space-between;font-size:10px;color:#aaa;margin-bottom:10px;}
+.dir{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f5f5f5;font-size:12px;}
+.dir:last-child{border:none;}
+.dk{color:#888;}.dv{font-weight:600;color:#333;}
+.rb{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;}
+.rbH{background:#fff0f0;color:#ff4444;}.rbM{background:#fff7f0;color:#ff8800;}.rbL{background:#f0fff6;color:#03c75a;}
+.nv-bubble{display:flex;flex-direction:column;align-items:center;cursor:pointer;transform:translate(-50%,-100%);}
+.nv-box{background:#fff;border-radius:8px;padding:4px 9px;white-space:nowrap;text-align:center;position:relative;}
+.nv-box::after{content:'';position:absolute;bottom:-7px;left:50%;transform:translateX(-50%);border:4px solid transparent;}
+.nv-box.HIGH{border:2px solid #ff4444;box-shadow:0 2px 8px rgba(255,68,68,.2);}.nv-box.HIGH::after{border-top-color:#ff4444;}
+.nv-box.MEDIUM{border:2px solid #ff8800;box-shadow:0 2px 8px rgba(255,136,0,.2);}.nv-box.MEDIUM::after{border-top-color:#ff8800;}
+.nv-box.LOW{border:2px solid #03c75a;box-shadow:0 2px 8px rgba(3,199,90,.15);}.nv-box.LOW::after{border-top-color:#03c75a;}
+.nv-name{font-size:9px;font-weight:700;color:#555;margin-bottom:1px;}
+.nv-range{font-size:11px;font-weight:700;color:#111;}
+.nv-unit{font-size:9px;color:#888;}
+.nv-dot{width:7px;height:7px;border-radius:50%;margin-top:2px;}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="sidebar">
+    <div id="sidebar-header">
+      <h1>⚡ 에너지맵</h1>
+      <p>한국외대 글로벌캠퍼스 · 배송 에너지 소비 예측</p>
+    </div>
+    <div class="tab-row"><span class="tab">에너지 높은 순</span></div>
+    <div id="ranking-list"></div>
+  </div>
+  <div id="map-wrap">
+    <div id="map"></div>
+    <div id="zoom-badge">🏫 캠퍼스 전체 보기</div>
+    <div id="toggle-bar">
+      <button class="tbtn on" id="btn-heat" onclick="toggleHeat()">히트맵</button>
+      <button class="tbtn on" id="btn-bubble" onclick="toggleBubble()">버블</button>
+    </div>
+    <div id="legend">
+      <h4>위험 등급</h4>
+      <div class="lrow"><div class="ldot" style="background:#ff4444"></div>HIGH (&gt;25 kcal)</div>
+      <div class="lrow"><div class="ldot" style="background:#ff8800"></div>MEDIUM (9.5~25)</div>
+      <div class="lrow"><div class="ldot" style="background:#03c75a"></div>LOW (&lt;9.5 kcal)</div>
+    </div>
+    <div id="detail">
+      <button id="dc" onclick="closeDetail()">×</button>
+      <div id="dn"></div><div id="dm"></div>
+      <div class="dsr">
+        <div class="ds"><div class="dsl">평균 에너지</div><div class="dsv" id="d-mean"></div><div class="dsu">kcal</div></div>
+        <div class="ds"><div class="dsl">위험 등급</div><div style="margin-top:5px" id="d-risk"></div></div>
+      </div>
+      <div class="drb"><div class="drf" id="d-bar"></div></div>
+      <div class="drt"><span id="d-p10"></span><span id="d-p90"></span></div>
+      <div class="dir"><span class="dk">최고층</span><span class="dv" id="d-floor"></span></div>
+      <div class="dir"><span class="dk">엘리베이터</span><span class="dv" id="d-elev"></span></div>
+      <div class="dir"><span class="dk">배송방식</span><span class="dv" id="d-dm"></span></div>
+      <div class="dir"><span class="dk">P10 ~ P90</span><span class="dv" id="d-range"></span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const DATA=[
+  {building:"백년관",lat:37.337366,lng:127.265471,mean_kcal:43.26,p10_kcal:35.65,p90_kcal:51.29,risk:"HIGH",delivery_mode:"floor_delivery",max_floor:11,has_elevator:true,storage_floor:null},
+  {building:"어문학관",lat:37.338142,lng:127.272863,mean_kcal:41.50,p10_kcal:27.79,p90_kcal:56.17,risk:"HIGH",delivery_mode:"floor_delivery",max_floor:5,has_elevator:false,storage_floor:null},
+  {building:"공학관",lat:37.337519,lng:127.268062,mean_kcal:31.40,p10_kcal:15.46,p90_kcal:46.49,risk:"HIGH",delivery_mode:"mixed",max_floor:5,has_elevator:false,storage_floor:2},
+  {building:"기숙사_B동",lat:37.335085,lng:127.262713,mean_kcal:19.18,p10_kcal:15.62,p90_kcal:22.92,risk:"MEDIUM",delivery_mode:"storage",max_floor:8,has_elevator:true,storage_floor:1},
+  {building:"기숙사_C동",lat:37.335133,lng:127.263513,mean_kcal:19.13,p10_kcal:15.31,p90_kcal:23.05,risk:"MEDIUM",delivery_mode:"storage",max_floor:8,has_elevator:true,storage_floor:1},
+  {building:"기숙사_A동",lat:37.334451,lng:127.262705,mean_kcal:19.12,p10_kcal:15.48,p90_kcal:23.01,risk:"MEDIUM",delivery_mode:"storage",max_floor:8,has_elevator:true,storage_floor:1},
+  {building:"기숙사_D동",lat:37.333747,lng:127.262551,mean_kcal:19.07,p10_kcal:15.40,p90_kcal:23.01,risk:"MEDIUM",delivery_mode:"storage",max_floor:4,has_elevator:false,storage_floor:1},
+  {building:"기숙사_E동",lat:37.333133,lng:127.261394,mean_kcal:18.96,p10_kcal:15.19,p90_kcal:22.92,risk:"MEDIUM",delivery_mode:"storage",max_floor:4,has_elevator:false,storage_floor:1},
+  {building:"자연과학관",lat:37.338903,lng:127.266410,mean_kcal:13.63,p10_kcal:9.56,p90_kcal:17.90,risk:"MEDIUM",delivery_mode:"floor_delivery",max_floor:5,has_elevator:true,storage_floor:null},
+  {building:"인문경상관",lat:37.339844,lng:127.274453,mean_kcal:4.97,p10_kcal:2.64,p90_kcal:6.93,risk:"LOW",delivery_mode:"storage",max_floor:4,has_elevator:false,storage_floor:1},
+  {building:"학생회관",lat:37.337157,lng:127.269699,mean_kcal:4.94,p10_kcal:2.69,p90_kcal:6.80,risk:"LOW",delivery_mode:"storage",max_floor:4,has_elevator:false,storage_floor:1},
+  {building:"창업보육센터",lat:37.339128,lng:127.267409,mean_kcal:4.93,p10_kcal:3.54,p90_kcal:6.80,risk:"LOW",delivery_mode:"storage",max_floor:4,has_elevator:false,storage_floor:1},
+  {building:"교양관",lat:37.339853,lng:127.272074,mean_kcal:4.86,p10_kcal:2.55,p90_kcal:6.79,risk:"LOW",delivery_mode:"storage",max_floor:5,has_elevator:true,storage_floor:1},
+  {building:"후생복지관",lat:37.337810,lng:127.268573,mean_kcal:4.84,p10_kcal:2.48,p90_kcal:6.73,risk:"LOW",delivery_mode:"storage",max_floor:4,has_elevator:false,storage_floor:1}
+];
+
+const MODE_KR={storage:"보관소 집중",floor_delivery:"층별 직접배송",mixed:"혼합"};
+const RCOL={HIGH:"#ff4444",MEDIUM:"#ff8800",LOW:"#03c75a"};
+const maxKcal=Math.max(...DATA.map(d=>d.mean_kcal));
+
+// 네이버 지도
+const map=new naver.maps.Map('map',{
+  center:new naver.maps.LatLng(37.337000,127.267000),
+  zoom:15,
+  mapTypeId:naver.maps.MapTypeId.NORMAL
+});
+
+// 히트맵 원형 오버레이
+let showHeat=true, showBubble=true;
+const heatCircles=[];
+DATA.forEach(d=>{
+  const op=0.10+(d.mean_kcal/maxKcal)*0.32;
+  const r=120+(d.mean_kcal/maxKcal)*200;
+  [r, r*0.45].forEach(radius=>{
+    const c=new naver.maps.Circle({map,center:new naver.maps.LatLng(d.lat,d.lng),radius,fillColor:RCOL[d.risk],fillOpacity:op,strokeWeight:0});
+    heatCircles.push(c);
+  });
+});
+
+// 지역 집계 마커 (줌아웃)
+const REGIONS=[
+  {name:"기숙사 단지",keys:["기숙사_A동","기숙사_B동","기숙사_C동","기숙사_D동","기숙사_E동"],lat:37.334300,lng:127.262600},
+  {name:"학술 구역",keys:["백년관","공학관","자연과학관","학생회관","후생복지관","창업보육센터"],lat:37.337800,lng:127.267500},
+  {name:"인문/어문",keys:["어문학관","교양관","인문경상관"],lat:37.339200,lng:127.273000}
+];
+const regionMarkers=[];
+REGIONS.forEach(r=>{
+  const items=DATA.filter(d=>r.keys.includes(d.building));
+  const avg=(items.reduce((s,d)=>s+d.mean_kcal,0)/items.length).toFixed(1);
+  const top=items.sort((a,b)=>b.mean_kcal-a.mean_kcal)[0];
+  const col=RCOL[top.risk];
+  const html=`<div style="display:flex;flex-direction:column;align-items:center;cursor:pointer;transform:translate(-50%,-50%)">
+    <div style="width:70px;height:70px;border-radius:50%;background:${col};opacity:.85;border:3px solid #fff;box-shadow:0 2px 12px ${col}66;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center">
+      <div style="font-size:9px;font-weight:700;color:#fff;line-height:1.3">${r.name}</div>
+      <div style="font-size:13px;font-weight:900;color:#fff">${avg}</div>
+      <div style="font-size:9px;color:rgba(255,255,255,.85)">kcal avg</div>
+    </div>
+  </div>`;
+  const m=new naver.maps.Marker({
+    position:new naver.maps.LatLng(r.lat,r.lng),
+    icon:{content:html,anchor:new naver.maps.Point(35,35)}
+  });
+  naver.maps.Event.addListener(m,'click',()=>{map.setCenter(new naver.maps.LatLng(r.lat,r.lng));map.setZoom(16);});
+  regionMarkers.push(m);
+});
+
+// 건물 버블 마커
+const bubbleMarkers=[];
+DATA.forEach((d,i)=>{
+  const col=RCOL[d.risk];
+  const html=`<div class="nv-bubble">
+    <div class="nv-box ${d.risk}">
+      <div class="nv-name">${d.building}</div>
+      <div class="nv-range">${d.p10_kcal.toFixed(1)}<span class="nv-unit">~</span>${d.p90_kcal.toFixed(1)}<span class="nv-unit"> kcal</span></div>
+    </div>
+    <div class="nv-dot" style="background:${col}"></div>
+  </div>`;
+  const m=new naver.maps.Marker({
+    position:new naver.maps.LatLng(d.lat,d.lng),
+    map,
+    icon:{content:html,anchor:new naver.maps.Point(55,48)}
+  });
+  naver.maps.Event.addListener(m,'click',()=>openDetail(d,i));
+  bubbleMarkers.push(m);
+});
+
+// 줌 레벨 연동
+const ZOOM_TH=15;
+function updateZoom(){
+  const z=map.getZoom();
+  const badge=document.getElementById('zoom-badge');
+  if(z<ZOOM_TH){
+    bubbleMarkers.forEach(m=>m.setMap(null));
+    regionMarkers.forEach(m=>m.setMap(map));
+    badge.textContent='🏫 지역별 에너지 합산';
+    badge.className='zoom-badge region';
+  } else {
+    bubbleMarkers.forEach(m=>m.setMap(showBubble?map:null));
+    regionMarkers.forEach(m=>m.setMap(null));
+    badge.textContent='🏢 건물별 예측 에너지';
+    badge.className='zoom-badge building';
+  }
+}
+naver.maps.Event.addListener(map,'zoom_changed',updateZoom);
+updateZoom();
+
+function toggleHeat(){
+  showHeat=!showHeat;
+  heatCircles.forEach(c=>c.setMap(showHeat?map:null));
+  document.getElementById('btn-heat').classList.toggle('on',showHeat);
+}
+function toggleBubble(){
+  showBubble=!showBubble;
+  if(map.getZoom()>=ZOOM_TH) bubbleMarkers.forEach(m=>m.setMap(showBubble?map:null));
+  document.getElementById('btn-bubble').classList.toggle('on',showBubble);
+}
+
+function openDetail(d,i){
+  document.getElementById('dn').textContent=d.building;
+  document.getElementById('dm').textContent=MODE_KR[d.delivery_mode];
+  document.getElementById('d-mean').textContent=d.mean_kcal.toFixed(1);
+  const rc=d.risk==='HIGH'?'rbH':d.risk==='MEDIUM'?'rbM':'rbL';
+  document.getElementById('d-risk').innerHTML=`<span class="rb ${rc}">${d.risk}</span>`;
+  document.getElementById('d-bar').style.cssText=`width:${(d.mean_kcal/maxKcal*100).toFixed(0)}%;background:${RCOL[d.risk]};opacity:.8;`;
+  document.getElementById('d-p10').textContent=d.p10_kcal.toFixed(1)+' kcal (P10)';
+  document.getElementById('d-p90').textContent=d.p90_kcal.toFixed(1)+' kcal (P90)';
+  document.getElementById('d-floor').textContent=d.max_floor+'층';
+  document.getElementById('d-elev').textContent=d.has_elevator?'있음 🛗':'없음';
+  document.getElementById('d-dm').textContent=MODE_KR[d.delivery_mode];
+  document.getElementById('d-range').textContent=`${d.p10_kcal.toFixed(1)} ~ ${d.p90_kcal.toFixed(1)} kcal`;
+  document.getElementById('detail').style.display='block';
+  document.querySelectorAll('.rank-item').forEach(el=>el.classList.remove('active'));
+  const t=document.querySelector(`.rank-item[data-i="${i}"]`);
+  if(t){t.classList.add('active');t.scrollIntoView({block:'nearest',behavior:'smooth'});}
+}
+function closeDetail(){
+  document.getElementById('detail').style.display='none';
+  document.querySelectorAll('.rank-item').forEach(el=>el.classList.remove('active'));
+}
+
+// 랭킹 패널
+const list=document.getElementById('ranking-list');
+DATA.forEach((d,i)=>{
+  const nc=i===0?'r1':i===1?'r2':i===2?'r3':'';
+  const el=document.createElement('div');
+  el.className='rank-item'; el.dataset.i=i;
+  el.innerHTML=`
+    <div class="rank-num ${nc}">${i+1}</div>
+    <div class="rdot" style="background:${RCOL[d.risk]}"></div>
+    <div class="rinfo"><div class="rname">${d.building}</div><div class="rsub">${MODE_KR[d.delivery_mode]} · ${d.max_floor}층</div></div>
+    <div class="rright">
+      <div class="rkcal" style="color:${RCOL[d.risk]}">${d.mean_kcal.toFixed(1)} kcal</div>
+      <div class="rrange">${d.p10_kcal.toFixed(1)}~${d.p90_kcal.toFixed(1)}</div>
+    </div>`;
+  el.addEventListener('click',()=>{
+    map.setCenter(new naver.maps.LatLng(d.lat,d.lng));
+    map.setZoom(17);
+    setTimeout(()=>openDetail(d,i),200);
+  });
+  list.appendChild(el);
+});
+</script>
+</body>
+</html>
