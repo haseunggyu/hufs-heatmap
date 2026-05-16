@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="referrer" content="unsafe-url">
+<script src="https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=825xps0pwx"></script>
+</head>
+<body>
+<h2 id="status">지도 로딩 중...</h2>
+<div id="map" style="width:100%;height:500px"></div>
+<script>
+window.onload = function() {
+  try {
+    var map = new naver.maps.Map('map', {
+      center: new naver.maps.LatLng(37.33710, 127.26380),
+      zoom: 16
+    });
+    document.getElementById('status').textContent = '✅ 네이버 지도 로딩 성공!';
+    document.getElementById('status').style.color = 'green';
+  } catch(e) {
+    document.getElementById('status').textContent = '❌ 오류: ' + e.message;
+    document.getElementById('status').style.color = 'red';
+  }
+};
+</script>
+</body>
+</html>
