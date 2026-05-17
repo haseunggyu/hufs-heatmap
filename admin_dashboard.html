@@ -267,6 +267,7 @@ function initHmap(){
     naver.maps.Event.addListener(m,'click',()=>openHmapDetail(d,i));
     bubbleMarkers.push(m);
   });
+  setTimeout(()=>hmapInstance.autoResize(),300);
   renderHmapRank();
 }
 
@@ -310,7 +311,7 @@ function toggleBubble(){showBubble=!showBubble;bubbleMarkers.forEach(m=>m.setMap
 
 /* 히트맵 패널 열 때 지도 초기화 */
 const origShowPanel=showPanel;
-document.querySelector('.nav button:nth-child(3)').addEventListener('click',()=>{setTimeout(initHmap,150);});
+document.querySelector('.nav button:nth-child(3)').addEventListener('click',()=>{setTimeout(()=>{initHmap();if(hmapInstance)hmapInstance.autoResize();},200);});
 
 renderAll();
 </script>

@@ -388,7 +388,7 @@ function toast(msg){const el=document.getElementById('toast');el.textContent=msg
 function gp(name){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('pg-'+name).classList.add('active');
-  if(name==='map'){setTimeout(initCourierMap,100);}
+  if(name==='map'){setTimeout(()=>{initCourierMap();if(cmapInstance)cmapInstance.autoResize();},200);}
   if(name==='cal'){renderCal();}
 }
 
@@ -506,6 +506,7 @@ function initCourierMap(){
     const m=new naver.maps.Marker({position:new naver.maps.LatLng(d.lat,d.lng),map:cmapInstance,icon:{content:html,anchor:new naver.maps.Point(55,46)}});
     naver.maps.Event.addListener(m,'click',()=>openMapBottom(d));
   });
+  setTimeout(()=>cmapInstance.autoResize(),300);
   renderMapSummary();
 }
 
