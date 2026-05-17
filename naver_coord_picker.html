@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="referrer" content="unsafe-url">
+<title>좌표 수집 툴 (네이버)</title>
+<script src="https://openapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=825xps0pwx"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Noto Sans KR',sans-serif;display:flex;height:100vh;}
+#map{flex:1;height:100vh;}
+#panel{width:320px;background:#fff;display:flex;flex-direction:column;border-left:1px solid #e0e0e0;overflow:hidden;}
+#panel-top{padding:14px 16px;background:#111827;color:#fff;}
+#panel-top h2{font-size:15px;font-weight:700;margin-bottom:4px;}
+#panel-top p{font-size:11px;color:#9ca3af;line-height:1.5;}
+#building-list{flex:1;overflow-y:auto;}
+.bitem{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #f0f0f0;cursor:pointer;border-left:3px solid transparent;transition:all .1s;}
+.bitem:hover{background:#f9fafb;}
+.bitem.active{background:#fffbeb;border-left-color:#f59e0b;}
+.bitem.done{background:#f0fdf4;border-left-color:#10b981;}
+.bname{font-size:13px;font-weight:600;}
+.bcoord{font-size:10px;color:#6b7280;margin-top:2px;font-family:monospace;}
+.bstatus{font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;flex-shrink:0;}
+.s-wait{background:#f3f4f6;color:#6b7280;}
+.s-active{background:#fef3c7;color:#92400e;}
+.s-done{background:#d1fae5;color:#065f46;}
+#bottom{padding:14px 16px;border-top:1px solid #e0e0e0;background:#f9fafb;}
+#progress{font-size:12px;color:#6b7280;margin-bottom:8px;}
+textarea{width:100%;height:100px;font-size:10px;font-family:monospace;border:1px solid #e0e0e0;border-radius:6px;padding:8px;resize:none;}
+button{margin-top:8px;width:100%;padding:9px;background:#f59e0b;border:none;border-radius:8px;font-size:13px;font-weight:700;color:#fff;cursor:pointer;}
+#cur-building{position:absolute;top:14px;left:50%;transform:translateX(-50%);z-index:100;background:#f59e0b;color:#fff;padding:7px 18px;border-radius:20px;font-size:13px;font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,.2);pointer-events:none;}
+</style>
+</head>
+<body>
+<div style="position:relative;flex:1;">
+  <div id="map"></div>
+  <div id="cur-building">공학관 위치를 클릭하세요</div>
+</div>
+<div id="panel">
+  <div id="panel-top">
+    <h2>📍 네이버 좌표 수집 툴</h2>
+    <p>① 목록에서 건물 클릭<br>② 지도에서 건물 위치 클릭<br>③ 완료 후 결과 복사 → Claude에게</p>
+  </div>
+  <div id="building-list"></div>
+  <div id="bottom">
+    <div id="progress">0 / 14 완료</div>
+    <textarea id="result" readonly placeholder="클릭하면 결과가 나타납니다..."></textarea>
+    <button onclick="copyResult()">📋 결과 복사하기</button>
+  </div>
+</div>
+
+<script>
+const BUILDINGS=[
+  "백년관","어문학관","공학관","기숙사_B동","기숙사_C동",
+  "기숙사_A동","기숙사_D동","기숙사_E동","자연과학관",
+  "인문경상관","학생회관","창업보육센터","교양관","후생복지관"
+];
+
+// 현재 저장된 좌표 (기본값)
+const coords={
+  "백년관":{lat:37.336366,lng:127.265471},
+  "어문학관":{lat:37.337142,lng:127.272863},
+  "공학관":{lat:37.336519,lng:127.268062},
+  "기숙사_B동":{lat:37.334085,lng:127.262713},
+  "기숙사_C동":{lat:37.334133,lng:127.263513},
+  "기숙사_A동":{lat:37.333451,lng:127.262705},
+  "기숙사_D동":{lat:37.332747,lng:127.262551},
+  "기숙사_E동":{lat:37.332133,lng:127.261394},
+  "자연과학관":{lat:37.337903,lng:127.266410},
+  "인문경상관":{lat:37.338844,lng:127.274453},
+  "학생회관":{lat:37.336157,lng:127.269699},
+  "창업보육센터":{lat:37.338128,lng:127.267409},
+  "교양관":{lat:37.338853,lng:127.272074},
+  "후생복지관":{lat:37.336810,lng:127.268573}
+};
+
+let active=null;
+const markers={};
+
+const map=new naver.maps.Map('map',{
+  center:new naver.maps.LatLng(37.337000,127.267000),
+  zoom:16,
+  mapTypeId:naver.maps.MapTypeId.NORMAL
+});
+
+// 기존 마커 표시
+BUILDINGS.forEach(name=>{
+  if(coords[name]){
+    const m=new naver.maps.Marker({
+      position:new naver.maps.LatLng(coords[name].lat,coords[name].lng),
+      map,
+      icon:{
+        content:`<div style="background:#f59e0b;color:#fff;padding:3px 7px;border-radius:6px;font-size:10px;font-weight:700;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.2)">${name}</div>`,
+        anchor:new naver.maps.Point(0,20)
+      }
+    });
+    markers[name]=m;
+  }
+});
+
+// 지도 클릭
+naver.maps.Event.addListener(map,'click',function(e){
+  if(!active) return;
+  const lat=parseFloat(e.coord.lat().toFixed(6));
+  const lng=parseFloat(e.coord.lng().toFixed(6));
+  coords[active]={lat,lng};
+
+  // 마커 업데이트
+  if(markers[active]) markers[active].setMap(null);
+  markers[active]=new naver.maps.Marker({
+    position:new naver.maps.LatLng(lat,lng),
+    map,
+    icon:{
+      content:`<div style="background:#10b981;color:#fff;padding:3px 7px;border-radius:6px;font-size:10px;font-weight:700;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.2)">${active}</div>`,
+      anchor:new naver.maps.Point(0,20)
+    }
+  });
+
+  // UI 업데이트
+  document.getElementById('coord-'+active).textContent=`lat:${lat}, lng:${lng}`;
+  document.getElementById('status-'+active).textContent='완료 ✓';
+  document.getElementById('status-'+active).className='bstatus s-done';
+  document.getElementById('item-'+active).className='bitem done';
+
+  updateResult();
+
+  // 다음 건물 자동 선택
+  const idx=BUILDINGS.indexOf(active);
+  if(idx<BUILDINGS.length-1) setTimeout(()=>selectBuilding(BUILDINGS[idx+1]),150);
+  else{ active=null; document.getElementById('cur-building').textContent='✅ 완료! 결과를 복사하세요'; }
+});
+
+// 건물 목록 렌더링
+const listEl=document.getElementById('building-list');
+BUILDINGS.forEach(name=>{
+  const item=document.createElement('div');
+  item.className=coords[name]?'bitem done':'bitem';
+  item.id='item-'+name;
+  item.innerHTML=`
+    <div>
+      <div class="bname">${name}</div>
+      <div class="bcoord" id="coord-${name}">${coords[name]?`lat:${coords[name].lat}, lng:${coords[name].lng}`:'클릭하여 선택'}</div>
+    </div>
+    <span class="bstatus ${coords[name]?'s-done':'s-wait'}" id="status-${name}">${coords[name]?'완료 ✓':'대기'}</span>`;
+  item.addEventListener('click',()=>selectBuilding(name));
+  listEl.appendChild(item);
+});
+
+function selectBuilding(name){
+  if(active){
+    const prev=document.getElementById('item-'+active);
+    if(prev&&!coords[active]) prev.className='bitem';
+  }
+  active=name;
+  document.getElementById('item-'+name).className=coords[name]?'bitem done active':'bitem active';
+  document.getElementById('status-'+name).textContent='선택됨';
+  document.getElementById('status-'+name).className='bstatus s-active';
+  document.getElementById('cur-building').textContent=`${name} 위치를 클릭하세요`;
+  document.getElementById('item-'+name).scrollIntoView({block:'nearest',behavior:'smooth'});
+
+  if(coords[name]) map.setCenter(new naver.maps.LatLng(coords[name].lat,coords[name].lng));
+}
+
+function updateResult(){
+  const done=BUILDINGS.filter(n=>coords[n]).length;
+  document.getElementById('progress').textContent=`${done} / ${BUILDINGS.length} 완료`;
+  const lines=BUILDINGS.map(n=>coords[n]?`"${n}": {"lat":${coords[n].lat},"lng":${coords[n].lng}}`:`"${n}": null`);
+  document.getElementById('result').value='{\n  '+lines.join(',\n  ')+'\n}';
+}
+
+function copyResult(){
+  navigator.clipboard.writeText(document.getElementById('result').value)
+    .then(()=>{
+      const btn=document.querySelector('button');
+      btn.textContent='✅ 복사됨!';
+      setTimeout(()=>btn.textContent='📋 결과 복사하기',2000);
+    });
+}
+
+updateResult();
+selectBuilding(BUILDINGS[0]);
+</script>
+</body>
+</html>
