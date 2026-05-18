@@ -67,9 +67,25 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Noto Sans KR','Segoe UI',sans
 .nv-range{font-size:11px;font-weight:700;color:#111;}
 .nv-unit{font-size:9px;color:#888;}
 .nv-dot{width:7px;height:7px;border-radius:50%;margin-top:2px;}
+/* ── 모바일 세로 반응형 ── */
+#mob-toggle{display:none;position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:600;background:#03c75a;color:#fff;border:none;border-radius:24px;padding:10px 24px;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(3,199,90,.4);white-space:nowrap;}
+@media (max-width:640px){
+  #app{flex-direction:column;}
+  #sidebar{width:100%;order:2;position:fixed;bottom:0;left:0;right:0;max-height:55vh;border-radius:20px 20px 0 0;box-shadow:0 -4px 20px rgba(0,0,0,.15);transform:translateY(100%);transition:transform .3s ease;z-index:600;}
+  #sidebar.open{transform:translateY(0);}
+  #sidebar-header{padding:18px 16px 12px;position:relative;}
+  #sidebar-header::before{content:'';display:block;width:40px;height:4px;background:#e0e0e0;border-radius:2px;position:absolute;top:8px;left:50%;transform:translateX(-50%);}
+  #map-wrap{order:1;height:100vh;width:100%;}
+  #mob-toggle{display:block;}
+  #detail{width:calc(100% - 32px);max-width:none;bottom:76px;}
+  #legend{bottom:76px;right:10px;}
+  #zoom-badge{top:10px;font-size:11px;padding:5px 12px;}
+  #toggle-bar{top:10px;right:10px;}
+}
 </style>
 </head>
 <body>
+<button id="mob-toggle" onclick="toggleSidebar()">📊 랭킹 보기</button>
 <div id="app">
   <div id="sidebar">
     <div id="sidebar-header">
@@ -131,7 +147,13 @@ const MODE_KR={storage:"보관소 집중",floor_delivery:"층별 직접배송",m
 const RCOL={HIGH:"#ff4444",MEDIUM:"#ff8800",LOW:"#03c75a"};
 const maxKcal=Math.max(...DATA.map(d=>d.mean_kcal));
 
-// 네이버 지도
+function toggleSidebar(){
+  const sb=document.getElementById('sidebar');
+  const btn=document.getElementById('mob-toggle');
+  const isOpen=sb.classList.toggle('open');
+  btn.textContent=isOpen?'✕ 닫기':'📊 랭킹 보기';
+}
+// 지도 클릭 시 사이드바 닫기
 const map=new naver.maps.Map('map',{
   center:new naver.maps.LatLng(37.337000,127.267000),
   zoom:15,
@@ -214,6 +236,13 @@ function updateZoom(){
     badge.className='zoom-badge building';
   }
 }
+naver.maps.Event.addListener(map,'click',function(){
+  const sb=document.getElementById('sidebar');
+  if(sb.classList.contains('open')){
+    sb.classList.remove('open');
+    document.getElementById('mob-toggle').textContent='📊 랭킹 보기';
+  }
+});
 naver.maps.Event.addListener(map,'zoom_changed',updateZoom);
 updateZoom();
 
