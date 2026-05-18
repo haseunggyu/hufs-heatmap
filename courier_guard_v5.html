@@ -1,0 +1,2372 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>과로제로 — 배송원 작업부하 관리</title>
+<script src="https://openapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=825xps0pwx"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F4F5F7;--surface:#FFFFFF;--border:#E4E6EC;
+  --t1:#111827;--t2:#6B7280;--t3:#9CA3AF;
+  --accent:#F59E0B;--acc2:#FEF3C7;
+  --blue:#2563EB;--blue-bg:#EFF6FF;
+  --green:#10B981;--green-bg:#ECFDF5;
+  --orange:#F97316;--orange-bg:#FFF7ED;
+  --red:#EF4444;--red-bg:#FEF2F2;
+  --purple:#7C3AED;--purple-bg:#EDE9FE;
+  --r:12px;--sh:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04);
+  --sh2:0 4px 16px rgba(0,0,0,.10);
+}
+
+/* GPS & 에너지 배지 */
+.gps-chip{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;background:var(--blue-bg);color:var(--blue)}
+.gps-chip.active{background:var(--green-bg);color:#065F46}
+.energy-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px}
+.energy-HIGH{background:var(--red-bg);color:var(--red)}
+.energy-MEDIUM{background:var(--orange-bg);color:var(--orange)}
+.energy-LOW{background:var(--green-bg);color:var(--green)}
+.bldg-energy-card{margin-top:8px;padding:10px 12px;border-radius:9px;background:var(--bg);border:1px solid var(--border);font-size:11px}
+.bldg-energy-title{font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.bldg-energy-row{display:flex;justify-content:space-between;color:var(--t2);margin-top:3px}
+/* 미니맵 */
+#mini-map{width:100%;height:200px;border-radius:var(--r);overflow:hidden;border:1px solid var(--border)}
+.map-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh)}
+html,body{height:100%;background:var(--bg);font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;color:var(--t1);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.page{display:none;min-height:100vh;flex-direction:column}
+.page.active{display:flex}
+.hdr{background:var(--surface);border-bottom:1px solid var(--border);padding:13px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.hdr-logo{display:flex;align-items:center;gap:10px}
+.logo-mk{width:32px;height:32px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px}
+.logo-txt{font-size:17px;font-weight:700;letter-spacing:-.3px}
+.logo-sub{font-size:10px;color:var(--t2);letter-spacing:.06em;text-transform:uppercase}
+.sdot{width:8px;height:8px;border-radius:50%;background:var(--t3)}
+.sdot.live{background:var(--green);box-shadow:0 0 0 3px var(--green-bg)}
+.slbl{font-size:11px;color:var(--t2);font-weight:500}
+.body{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:14px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;box-shadow:var(--sh)}
+.clbl{font-size:10px;font-weight:600;color:var(--t3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px}
+/* LOGIN */
+#pg-login{justify-content:center;align-items:center;padding:28px 20px}
+.lw{width:100%;max-width:360px}
+.ll{text-align:center;margin-bottom:28px}
+.ll .bm{width:60px;height:60px;background:var(--accent);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 10px}
+.ll h1{font-size:22px;font-weight:700;letter-spacing:-.5px}
+.ll p{font-size:12px;color:var(--t2);margin-top:3px}
+.fg{margin-bottom:12px}
+.fl{font-size:11px;font-weight:600;color:var(--t2);margin-bottom:5px;display:block}
+.fi{width:100%;padding:12px 13px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:inherit;background:var(--surface);color:var(--t1);outline:none;transition:border-color .15s}
+.fi:focus{border-color:var(--accent)}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.bp{width:100%;padding:14px;background:var(--accent);border:none;border-radius:10px;font-size:15px;font-weight:700;color:#fff;cursor:pointer;font-family:inherit;transition:opacity .15s,transform .1s}
+.bp:active{opacity:.85;transform:scale(.98)}
+.dh{text-align:center;margin-top:14px;font-size:12px;color:var(--t3)}
+.dh button{background:none;border:none;color:var(--blue);font-size:12px;cursor:pointer;text-decoration:underline;font-family:inherit}
+/* GREETING */
+.gc{background:linear-gradient(135deg,#1D4ED8 0%,#2563EB 100%);border-radius:var(--r);padding:18px;color:#fff;box-shadow:var(--sh2)}
+.gc h2{font-size:19px;font-weight:700;margin-bottom:3px}
+.gc p{font-size:12px;opacity:.75}
+.gs{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(255,255,255,.15);border-radius:10px;margin-top:14px;overflow:hidden}
+.gss{background:rgba(255,255,255,.12);padding:10px 6px;text-align:center}
+.gss .v{font-size:17px;font-weight:700}
+.gss .l{font-size:10px;opacity:.7;margin-top:1px}
+/* DELIVERY ITEMS */
+.di{border:1.5px solid var(--border);border-radius:var(--r);padding:13px 14px;cursor:pointer;transition:border-color .15s;background:var(--surface);margin-bottom:8px}
+.di.done{opacity:.5}
+.di.cur{border-color:var(--accent);background:#FFFBEB}
+.di.rest-after{border-bottom:3px dashed var(--blue)}
+.di-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.dinum{width:26px;height:26px;border-radius:7px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--t2);flex-shrink:0}
+.dinum.cur{background:var(--accent);color:#fff}
+.diaddr{font-size:13px;font-weight:600;flex:1;line-height:1.4}
+.badge{font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;white-space:nowrap;flex-shrink:0}
+.b-pend{background:var(--bg);color:var(--t2)}
+.b-act{background:var(--acc2);color:#92400E}
+.b-done{background:var(--green-bg);color:#065F46}
+.b-rest{background:var(--blue-bg);color:var(--blue)}
+.b-heat{background:var(--red-bg);color:var(--red)}
+.b-cart{background:var(--purple-bg);color:var(--purple)}
+.di-bot{display:flex;align-items:center;gap:6px;margin-top:7px;flex-wrap:wrap}
+.dtag{font-size:11px;color:var(--t2);background:var(--bg);padding:2px 7px;border-radius:6px}
+.denj{font-size:11px;font-weight:600;color:var(--accent);font-family:'DM Mono',monospace}
+.denj.act{color:var(--blue)}
+/* CART RECOMMENDATION BOX */
+.cart-rec{margin-top:8px;padding:8px 10px;border-radius:9px;font-size:11px;line-height:1.5;border:1px solid transparent}
+.cart-rec.must{background:var(--red-bg);border-color:var(--red);color:#7F1D1D}
+.cart-rec.suggest{background:var(--purple-bg);border-color:var(--purple);color:var(--purple)}
+.cart-rec.tip{background:var(--blue-bg);border-color:var(--blue);color:#1E3A8A}
+.cart-rec-title{font-weight:700;margin-bottom:2px}
+.cart-rec-study{font-size:10px;opacity:.75;margin-top:3px}
+/* TABS */
+.tabs{display:flex;gap:4px;background:var(--bg);padding:4px;border-radius:10px;margin-bottom:6px}
+.tb{flex:1;padding:8px 4px;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;background:transparent;color:var(--t2);transition:all .15s}
+.tb.on{background:var(--surface);color:var(--t1);box-shadow:var(--sh)}
+/* MONITORING */
+.act-hero{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px;box-shadow:var(--sh)}
+.aicon{width:60px;height:60px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:30px;margin-bottom:10px;transition:background .3s}
+.aname{font-size:21px;font-weight:700;letter-spacing:-.3px}
+.ako{font-size:12px;color:var(--t2);margin-top:2px}
+.ameta{display:flex;gap:7px;margin-top:10px;flex-wrap:wrap}
+.achip{font-size:11px;font-weight:500;padding:3px 9px;border-radius:20px;background:var(--bg);color:var(--t2)}
+.achip.hl{background:var(--acc2);color:#92400E}
+/* ENERGY */
+.egrid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.ebox{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px;box-shadow:var(--sh)}
+.ebox .el{font-size:10px;font-weight:600;color:var(--t3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px}
+.ebox .ev{font-size:24px;font-weight:700;font-family:'DM Mono',monospace;letter-spacing:-.5px;line-height:1}
+.ebox .eu{font-size:11px;font-weight:500;color:var(--t2);margin-top:3px}
+.ebox .es{font-size:11px;color:var(--t3);margin-top:5px;font-family:'DM Mono',monospace}
+/* WSI */
+.wsic{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;box-shadow:var(--sh)}
+.wsir{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
+.wsiv{font-size:26px;font-weight:700;font-family:'DM Mono',monospace}
+.wsib-bg{height:7px;background:var(--bg);border-radius:4px;overflow:hidden;margin-bottom:7px}
+.wsib{height:100%;border-radius:4px;transition:width .5s ease,background .5s}
+.wsitks{display:flex;justify-content:space-between}
+.wsitk{font-size:10px;color:var(--t3)}
+.wsi-st{font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px}
+/* IMU */
+.imu-g{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sn{font-size:10px;font-weight:600;color:var(--t3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}
+.ixyz{display:flex;gap:5px}
+.iax{flex:1;background:var(--bg);border-radius:6px;padding:5px 3px;text-align:center}
+.iax .aa{font-size:9px;font-weight:700;color:var(--t3)}
+.iax .av{font-size:11px;font-weight:600;font-family:'DM Mono',monospace}
+/* PROGRESS */
+.dpc{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;box-shadow:var(--sh)}
+.dpbg{height:6px;background:var(--bg);border-radius:3px;overflow:hidden}
+.dpb{height:100%;background:var(--accent);border-radius:3px;transition:width .5s}
+/* BUTTONS */
+.brow{display:flex;gap:9px;margin-bottom:0}
+.bsec{flex:1;padding:12px;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-weight:600;color:var(--t1);cursor:pointer;font-family:inherit;transition:all .15s}
+.bsec:active{background:var(--border)}
+.bcomp{flex:2;padding:12px;background:var(--accent);border:none;border-radius:10px;font-size:13px;font-weight:700;color:#fff;cursor:pointer;font-family:inherit;transition:all .15s}
+.bcomp:active{opacity:.85}
+.bcomp:disabled{background:var(--border);color:var(--t3);cursor:not-allowed}
+.bphoto{flex:2;padding:12px;background:var(--blue);border:none;border-radius:10px;font-size:13px;font-weight:700;color:#fff;cursor:pointer;font-family:inherit;transition:all .15s}
+.bphoto:active{opacity:.85}
+.bphoto:disabled{background:var(--border);color:var(--t3);cursor:not-allowed}
+.bsave{padding:12px 15px;background:var(--blue);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap}
+/* ALERT */
+.alrt{border-radius:10px;padding:11px 13px;display:flex;align-items:center;gap:9px;font-size:12px;font-weight:500}
+.alrt.caut{background:#FEF3C7;color:#92400E}
+.alrt.warn{background:var(--orange-bg);color:#9A3412}
+.alrt.dngr{background:var(--red-bg);color:#991B1B}
+/* NAV */
+.bnav{display:flex;background:var(--surface);border-top:1px solid var(--border);padding:7px 0 calc(7px + env(safe-area-inset-bottom));position:sticky;bottom:0}
+.ni{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 0;cursor:pointer;background:none;border:none;font-family:inherit;color:var(--t3);transition:color .15s}
+.ni.on{color:var(--accent)}
+.nico{font-size:19px;line-height:1}
+.nlbl{font-size:10px;font-weight:600;letter-spacing:.04em}
+/* CONN */
+.cchip{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;background:var(--bg);color:var(--t2)}
+.cchip.ok{background:var(--green-bg);color:#065F46}
+.cchip.err{background:var(--red-bg);color:#991B1B}
+.cchip .cd{width:6px;height:6px;border-radius:50%;background:currentColor}
+/* SUMMARY */
+.srow{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)}
+.srow:last-child{border-bottom:none}
+.sk{font-size:12px;color:var(--t2)}
+.sv{font-size:13px;font-weight:700;font-family:'DM Mono',monospace}
+/* TOAST */
+.toast{position:fixed;bottom:75px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--t1);color:#fff;padding:9px 18px;border-radius:100px;font-size:12px;font-weight:500;opacity:0;transition:all .22s;pointer-events:none;z-index:2000;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+/* MISC */
+.srv-row{display:flex;gap:9px;align-items:flex-end}
+.srv-row .fg{flex:1;margin-bottom:0}
+.empty{text-align:center;padding:36px 16px;color:var(--t3)}
+.empty .ei{font-size:32px;margin-bottom:7px}
+.empty p{font-size:12px}
+/* CALENDAR */
+.cal-dow{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;margin-bottom:2px}
+.cal-dow-lbl{text-align:center;font-size:10px;font-weight:700;color:var(--t3);padding:4px 0}
+.cal-days{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.cal-day{aspect-ratio:1;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;font-size:12px;font-weight:600;color:var(--t2);border:1.5px solid transparent;transition:all .15s;position:relative}
+.cal-day.empty{color:var(--border);cursor:default;pointer-events:none}
+.cal-day.today{border-color:var(--accent);color:var(--accent)}
+.cal-day.has-data{background:var(--blue-bg);color:var(--blue)}
+.cal-day.wsi-warn{background:#FEF3C7;color:#92400E}
+.cal-day.wsi-dngr{background:var(--red-bg);color:var(--red)}
+.cal-day.sel{background:var(--blue);color:#fff!important;border-color:var(--blue)}
+.cal-dot{width:4px;height:4px;border-radius:50%;background:currentColor;margin-top:2px;opacity:.7}
+/* HEAT CARD */
+.heat-card{border-radius:var(--r);padding:14px;border:1.5px solid var(--border);background:var(--surface);box-shadow:var(--sh);transition:background .3s,border-color .3s}
+.heat-card.ok{border-color:var(--green);background:var(--green-bg)}
+.heat-card.warn{border-color:var(--accent);background:var(--acc2)}
+.heat-card.danger{border-color:var(--orange);background:var(--orange-bg)}
+.heat-card.critical{border-color:var(--red);background:var(--red-bg)}
+.heat-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.heat-vals{display:flex;gap:12px;align-items:baseline;margin-bottom:6px}
+.heat-temp{font-size:22px;font-weight:700;font-family:'DM Mono',monospace}
+.heat-meta{font-size:11px;color:var(--t2)}
+.heat-sched{font-size:12px;font-weight:600;padding:7px 10px;border-radius:8px;background:rgba(0,0,0,.05);line-height:1.5}
+/* REST BANNER — non-blocking, dismissible */
+.rest-banner{border-radius:var(--r);padding:12px 14px;background:var(--blue-bg);border:1.5px solid var(--blue);display:flex;align-items:center;gap:10px}
+.rest-banner.heat{background:var(--red-bg);border-color:var(--red)}
+.rest-banner-text{flex:1;font-size:12px}
+.rest-banner-dismiss{background:none;border:none;font-size:16px;cursor:pointer;color:var(--t3);padding:0 4px}
+/* EMERGENCY REST MODAL — only for heat caution */
+.rest-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:5000;display:flex;align-items:flex-end}
+.rest-sheet{background:var(--surface);border-radius:24px 24px 0 0;padding:24px 20px calc(24px + env(safe-area-inset-bottom));width:100%;box-shadow:0 -8px 40px rgba(0,0,0,.18)}
+.rest-icon{font-size:44px;text-align:center;margin-bottom:6px}
+.rest-title{font-size:20px;font-weight:700;text-align:center;letter-spacing:-.3px}
+.rest-sub{font-size:12px;color:var(--t2);text-align:center;margin-top:3px;margin-bottom:18px}
+.rest-timer{font-size:48px;font-weight:700;font-family:'DM Mono',monospace;text-align:center;color:var(--red);margin-bottom:16px;letter-spacing:-2px}
+.rest-timer.cooling{color:var(--blue)}
+.rest-timer.done{color:var(--green)}
+.rest-reasons{display:flex;flex-direction:column;gap:6px;margin-bottom:18px}
+.rest-reason{font-size:12px;background:var(--bg);padding:8px 11px;border-radius:9px;color:var(--t2);line-height:1.4}
+.rest-btns{display:flex;gap:9px}
+/* WORK PROGRESS */
+.work-prog-bar{height:5px;background:var(--bg);border-radius:3px;overflow:hidden;margin-top:8px}
+.work-prog-fill{height:100%;border-radius:3px;transition:width .5s,background .5s}
+button:disabled{opacity:.35!important;cursor:not-allowed!important;pointer-events:none!important}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+.pulse{animation:pulse 1.4s infinite}
+/* HYDRATION */
+.hydro-strip{padding:12px 14px;border-radius:var(--r);border:1.5px solid var(--blue);background:var(--blue-bg)}
+.hydro-strip.warn{border-color:var(--orange);background:var(--orange-bg)}
+.hydro-strip.urgent{border-color:var(--red);background:var(--red-bg)}
+.hydro-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.hydro-cups{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px}
+.hydro-cup{font-size:20px;cursor:pointer;line-height:1;transition:transform .1s;-webkit-tap-highlight-color:transparent}
+.hydro-cup:active{transform:scale(1.3)}
+.hydro-cup.empty{opacity:.2;filter:grayscale(1)}
+/* BUILDING CLUSTER */
+.bldg-header{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--purple-bg);border-radius:9px;margin-bottom:4px;border:1px solid rgba(124,58,237,.2)}
+.bldg-hdr-name{font-size:12px;font-weight:700;color:var(--purple);flex:1}
+.bldg-hdr-tip{font-size:10px;color:var(--purple);opacity:.8}
+/* 산재 LOG */
+.sanji-btn{width:100%;padding:12px;background:var(--red-bg);border:1.5px solid var(--red);border-radius:10px;font-size:13px;font-weight:700;color:var(--red);cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px}
+.sanji-entry{padding:9px 12px;background:var(--bg);border-radius:9px;margin-bottom:6px;font-size:11px;color:var(--t2);line-height:1.6;border-left:3px solid var(--red)}
+/* EARNINGS */
+.earn-row{display:flex;gap:8px;margin-bottom:8px}
+.earn-box{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;box-shadow:var(--sh)}
+.earn-val{font-size:20px;font-weight:700;font-family:'DM Mono',monospace;color:var(--green)}
+.earn-lbl{font-size:10px;color:var(--t3);margin-top:2px}
+/* PACE BAR */
+.pace-bar-bg{height:6px;background:var(--bg);border-radius:3px;overflow:hidden;margin-top:6px}
+.pace-bar-fill{height:100%;border-radius:3px;background:var(--green);transition:width .5s}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="pg-login" class="page active">
+<div class="lw">
+  <div class="ll">
+    <div class="bm">📦</div>
+    <h1>과로제로</h1>
+    <p>배송원 작업부하 실시간 관리</p>
+  </div>
+  <div class="card">
+    <div class="fg"><label class="fl">아이디 (사원번호)</label><input class="fi" id="li-id" type="text" placeholder="CJ-12345" value="CJ-28471"></div>
+    <div class="fg"><label class="fl">비밀번호</label><input class="fi" id="li-pw" type="password" placeholder="••••••" value="1234"></div>
+    <div class="fr" style="margin-bottom:12px">
+      <div class="fg" style="margin:0"><label class="fl">체중 (kg)</label><input class="fi" id="li-w" type="number" value="72" min="40" max="150"></div>
+      <div class="fg" style="margin:0"><label class="fl">키 (cm)</label><input class="fi" id="li-h" type="number" value="175" min="140" max="220"></div>
+    </div>
+    <div class="fr" style="margin-bottom:14px">
+      <div class="fg" style="margin:0"><label class="fl">나이</label><input class="fi" id="li-a" type="number" value="35" min="18" max="70"></div>
+      <div class="fg" style="margin:0"><label class="fl">성별</label><select class="fi" id="li-g"><option value="male">남성</option><option value="female">여성</option></select></div>
+    </div>
+    <button class="bp" onclick="doLogin()">로그인 및 업무 불러오기</button>
+  </div>
+  <div class="dh">데모 계정으로 시작: <button onclick="demoFill()">자동 입력</button></div>
+</div>
+</div>
+
+<!-- DELIVERY LIST -->
+<div id="pg-list" class="page">
+  <div class="hdr">
+    <div class="hdr-logo">
+      <div class="logo-mk">📦</div>
+      <div><div class="logo-txt">과로제로</div><div class="logo-sub" id="hdr-date">—</div></div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+      <div style="display:flex;align-items:center;gap:6px">
+        <div class="sdot" id="hdr-dot"></div>
+        <span class="slbl" id="hdr-lbl">대기중</span>
+      </div>
+      <span class="gps-chip" id="gps-status">📍 GPS 대기</span>
+    </div>
+  </div>
+  <div class="body">
+    <div class="gc">
+      <h2 id="g-name">—</h2>
+      <p id="g-sub">—</p>
+      <div class="gs">
+        <div class="gss"><div class="v" id="s-tot">0</div><div class="l">총 배송</div></div>
+        <div class="gss"><div class="v" id="s-dn">0</div><div class="l">완료</div></div>
+        <div class="gss"><div class="v" id="s-kc">0</div><div class="l">kcal</div></div>
+      </div>
+    </div>
+
+    <!-- HEAT CARD -->
+    <div id="list-heat-banner" style="display:none" class="heat-card ok">
+      <div class="heat-row">
+        <div class="clbl" style="margin:0">🌡️ 열환경 (NIOSH REL 기준)</div>
+        <div id="lh-badge" class="badge b-pend">—</div>
+      </div>
+      <div class="heat-vals">
+        <span class="heat-temp" id="lh-temp">—°C</span>
+        <span class="heat-meta">습도 <b id="lh-hum">—</b>%</span>
+        <span class="heat-meta">WBGT ≈ <b id="lh-wbgt">—</b>°C</span>
+      </div>
+      <div class="heat-sched" id="lh-sched">—</div>
+    </div>
+
+    <!-- EARNINGS / PACE TRACKER -->
+    <div id="earn-card" style="display:none;padding:14px" class="card">
+      <div class="clbl" style="margin-bottom:8px">📊 오늘 페이스</div>
+      <div class="earn-row">
+        <div class="earn-box"><div class="earn-val" id="earn-done">0</div><div class="earn-lbl">완료</div></div>
+        <div class="earn-box"><div class="earn-val" id="earn-remain" style="color:var(--t2)">0</div><div class="earn-lbl">남은 배송</div></div>
+        <div class="earn-box"><div class="earn-val" id="earn-load" style="color:var(--accent)">0kg</div><div class="earn-lbl">오늘 총 중량</div></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--t2);margin-bottom:4px">
+        <span>진행률</span>
+        <span id="earn-pct">0%</span>
+      </div>
+      <div class="pace-bar-bg"><div class="pace-bar-fill" id="earn-bar" style="width:0%"></div></div>
+      <div style="font-size:10px;color:var(--t3);margin-top:6px" id="earn-eta">예상 완료까지 —</div>
+    </div>
+
+    <!-- HYDRATION REMINDER: NIOSH 2016 Ch.7 / ACSM 2007 / 고용노동부 온열질환 예방 지침 -->
+    <div id="hydro-card" style="display:none" class="hydro-strip">
+      <div class="hydro-top">
+        <div>
+          <div style="font-size:13px;font-weight:700">💧 수분 섭취 관리</div>
+          <div id="hydro-next" style="font-size:11px;color:var(--t2);margin-top:2px">다음 섭취까지 —분</div>
+        </div>
+        <div style="text-align:right">
+          <span id="hydro-count" style="font-size:20px;font-weight:700;font-family:'DM Mono',monospace;color:var(--blue)">0</span>
+          <span style="font-size:11px;color:var(--t2)"> 컵 / <span id="hydro-target">—</span>컵 목표</span>
+        </div>
+      </div>
+      <div class="hydro-cups" id="hydro-cups" style="margin-bottom:6px"></div>
+      <div style="font-size:10px;color:var(--t3)">탭하여 섭취 기록 · NIOSH 2016 · ACSM 2007</div>
+    </div>
+
+    <!-- SOFT REST BANNER (non-blocking) -->
+    <div id="rest-banner" style="display:none" class="rest-banner">
+      <span style="font-size:20px">💤</span>
+      <div class="rest-banner-text" id="rest-banner-text"></div>
+      <button class="rest-banner-dismiss" onclick="dismissRestBanner()" title="닫기">✕</button>
+    </div>
+
+    <div class="wsic" id="lwsi" style="display:none">
+      <div class="clbl">작업부하 지수 (WSI)</div>
+      <div class="wsir"><div class="wsiv" id="lwsi-v">0.00</div><div class="wsi-st" id="lwsi-st">정상</div></div>
+      <div class="wsib-bg"><div class="wsib" id="lwsi-b" style="width:0%"></div></div>
+    </div>
+
+    <div>
+      <div class="tabs">
+        <button class="tb on" onclick="swTab('p')">미배송</button>
+        <button class="tb" onclick="swTab('d')">완료</button>
+      </div>
+      <div id="dl-pend"></div>
+      <div id="dl-done" style="display:none"></div>
+    </div>
+  </div>
+
+  <!-- 산재 FLOATING BUTTON -->
+  <button id="sanji-fab" onclick="logSanjiEvidence()"
+    style="position:fixed;bottom:72px;right:16px;width:auto;padding:10px 16px;
+           border-radius:100px;z-index:1000;font-size:12px;font-weight:700;
+           background:var(--red-bg);border:1.5px solid var(--red);color:var(--red);
+           cursor:pointer;box-shadow:var(--sh2);display:none;font-family:inherit">
+    🚨 산재 기록용
+  </button>
+
+  <div class="bnav">
+    <button class="ni on" onclick="gp('list')"><span class="nico">📋</span><span class="nlbl">배송목록</span></button>
+    <button class="ni" onclick="gp('map')"><span class="nico">🗺️</span><span class="nlbl">에너지맵</span></button>
+    <button class="ni" onclick="gp('cal')"><span class="nico">📅</span><span class="nlbl">기록</span></button>
+    <button class="ni" onclick="gp('set')"><span class="nico">⚙️</span><span class="nlbl">설정</span></button>
+  </div>
+</div>
+
+<!-- MONITORING PAGE (accessible via delivery tap, no nav tab) -->
+<div id="pg-mon" class="page">
+  <div class="hdr">
+    <div class="hdr-logo">
+      <button onclick="gp('list')" style="background:none;border:none;font-size:19px;cursor:pointer;padding:0 8px 0 0">←</button>
+      <div><div class="logo-txt" id="m-dname">배송지 선택 필요</div><div class="logo-sub" id="m-dfloor">—</div></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <div class="sdot pulse" id="m-dot" style="background:var(--t3)"></div>
+      <span class="slbl" id="m-st">준비중</span>
+    </div>
+  </div>
+  <div class="body">
+    <div id="alrt-box" style="display:none"></div>
+
+    <!-- HEAT CARD (monitoring) -->
+    <div id="heat-card" class="heat-card ok" style="display:none">
+      <div class="heat-row">
+        <div class="clbl" style="margin:0">🌡️ 열환경</div>
+        <div id="hc-badge" class="badge b-pend">—</div>
+      </div>
+      <div class="heat-vals">
+        <span class="heat-temp" id="hc-temp">—°C</span>
+        <span class="heat-meta">습도 <b id="hc-hum">—</b>%</span>
+        <span class="heat-meta">WBGT ≈ <b id="hc-wbgt">—</b>°C</span>
+      </div>
+      <div class="heat-sched" id="hc-sched">—</div>
+      <div class="work-prog-bar">
+        <div class="work-prog-fill" id="work-prog" style="width:0%;background:var(--green)"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:4px">
+        <span style="font-size:10px;color:var(--t3)">연속 작업 <span id="work-min" style="font-weight:700">0</span>분</span>
+        <span style="font-size:10px;color:var(--t3)">MET·분 <span id="met-min" style="font-weight:700">0</span></span>
+      </div>
+    </div>
+
+    <div class="act-hero">
+      <div class="aicon" id="aiwrap" style="background:#F3F4F6"><span id="aico">⏸</span></div>
+      <div class="aname" id="aname">대기 중</div>
+      <div class="ako" id="ako">배송지를 탭해 모니터링 시작</div>
+      <div class="ameta">
+        <span class="achip" id="adom">—</span>
+        <span class="achip" id="ald">박스 없음</span>
+        <span class="achip hl" id="amet">MET —</span>
+      </div>
+    </div>
+
+    <div class="egrid">
+      <div class="ebox"><div class="el">5초 에너지</div><div class="ev" id="we">—</div><div class="eu">Joules</div><div class="es" id="wkc">— kcal</div></div>
+      <div class="ebox"><div class="el">누적 에너지</div><div class="ev" id="te" style="color:var(--blue)">0</div><div class="eu">Joules</div><div class="es" id="tkc">0.000 kcal</div></div>
+    </div>
+
+    <div class="wsic">
+      <div class="clbl">작업부하 지수 (WSI — ISO 8996)</div>
+      <div class="wsir"><div class="wsiv" id="wv">0.00</div><div class="wsi-st" id="wst" style="background:var(--green-bg);color:#065F46">정상</div></div>
+      <div class="wsib-bg"><div class="wsib" id="wb" style="width:0%;background:var(--green)"></div></div>
+      <div class="wsitks">
+        <span class="wsitk">0</span>
+        <span class="wsitk" style="color:var(--accent)">▲0.8 주의</span>
+        <span class="wsitk" style="color:var(--orange)">▲1.0 경고</span>
+        <span class="wsitk" style="color:var(--red)">▲1.2 위험</span>
+      </div>
+      <!-- Live formula values -->
+      <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border);display:grid;grid-template-columns:1fr 1fr;gap:4px 12px">
+        <div style="font-size:10px;color:var(--t3)">E<sub>total</sub></div>
+        <div style="font-size:10px;font-family:'DM Mono',monospace;color:var(--t2);text-align:right" id="fm-etot">— J</div>
+        <div style="font-size:10px;color:var(--t3)">E<sub>limit</sub> (165W/m²×BSA×T)</div>
+        <div style="font-size:10px;font-family:'DM Mono',monospace;color:var(--t2);text-align:right" id="fm-elim">— J</div>
+        <div style="font-size:10px;color:var(--t3)">BSA (DuBois)</div>
+        <div style="font-size:10px;font-family:'DM Mono',monospace;color:var(--t2);text-align:right" id="fm-bsa">— m²</div>
+        <div style="font-size:10px;color:var(--t3)">C<sub>load</sub> (현재 배송)</div>
+        <div style="font-size:10px;font-family:'DM Mono',monospace;color:var(--t2);text-align:right" id="fm-cload">—</div>
+      </div>
+    </div>
+
+    <div class="dpc">
+      <div class="clbl">현재 배송지</div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:7px">
+        <div style="font-size:13px;font-weight:600" id="dp-a">배송지를 선택해주세요</div>
+        <div style="font-size:12px;color:var(--t2)" id="dp-f">—</div>
+      </div>
+      <div class="bldg-energy-card" id="del-energy-info" style="display:none"></div>
+      <div class="dpbg"><div class="dpb" id="dpb" style="width:0%"></div></div>
+      <div style="display:flex;justify-content:space-between;margin-top:6px">
+        <span style="font-size:11px;color:var(--t3)" id="dp-pred">예측: —</span>
+        <span style="font-size:11px;color:var(--blue);font-weight:600" id="dp-act">실측: —</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="clbl">실시간 IMU 센서</div>
+      <div class="imu-g">
+        <div><div class="sn">가속도 (m/s²)</div><div class="ixyz">
+          <div class="iax"><div class="aa">X</div><div class="av" id="ax">—</div></div>
+          <div class="iax"><div class="aa">Y</div><div class="av" id="ay">—</div></div>
+          <div class="iax"><div class="aa">Z</div><div class="av" id="az">—</div></div>
+        </div></div>
+        <div><div class="sn">자이로 (rad/s)</div><div class="ixyz">
+          <div class="iax"><div class="aa">X</div><div class="av" id="gx">—</div></div>
+          <div class="iax"><div class="aa">Y</div><div class="av" id="gy">—</div></div>
+          <div class="iax"><div class="aa">Z</div><div class="av" id="gz">—</div></div>
+        </div></div>
+      </div>
+      <div style="margin-top:8px;font-size:11px;color:var(--t3)" id="ibuf">버퍼: 0 / 150</div>
+    </div>
+
+    
+    <!-- 미니맵 + GPS -->
+    <div class="map-card">
+      <div style="padding:12px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+        <div class="clbl" style="margin:0">📍 현재 위치</div>
+        <span class="gps-chip" id="mon-gps-chip">GPS 연결 중...</span>
+      </div>
+      <div id="mini-map"></div>
+      <div style="padding:8px 14px;font-size:10px;color:var(--t3)">
+        🎯 = 현재 배송지 · 파란 점 = 내 위치 · 색상 = 에너지 위험도
+      </div>
+    </div>
+<div id="perm-btn-wrap" style="display:none">
+      <button class="bcomp" onclick="reqPerm()" style="background:var(--blue);margin-bottom:8px;width:100%">🔐 센서 권한 허용 (iOS)</button>
+    </div>
+    <div class="brow">
+      <button class="bsec" id="btn-stop" onclick="stopMon()" disabled>⏹ 중지</button>
+      <button class="bcomp" id="btn-start" onclick="startMon()">▶ 모니터링 시작</button>
+    </div>
+    <div class="brow">
+      <button class="bphoto" id="btn-photo" onclick="captureAndDone()" disabled>📸 사진 촬영 후 완료</button>
+    </div>
+    <input id="photo-input" type="file" accept="image/*" capture="environment" style="display:none" onchange="handlePhotoCapture(this)">
+  </div>
+  <div class="bnav">
+    <button class="ni" onclick="gp('list')"><span class="nico">📋</span><span class="nlbl">배송목록</span></button>
+    <button class="ni" onclick="gp('cal')"><span class="nico">📅</span><span class="nlbl">기록</span></button>
+    <button class="ni" onclick="gp('set')"><span class="nico">⚙️</span><span class="nlbl">설정</span></button>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+<div id="pg-set" class="page">
+  <div class="hdr"><div class="hdr-logo"><div class="logo-mk">📦</div><div><div class="logo-txt">설정</div></div></div></div>
+  <div class="body">
+    <div class="card">
+      <div class="clbl">서버 URL (ngrok)</div>
+      <div class="srv-row">
+        <div class="fg"><input class="fi" id="srv-url" type="url" placeholder="https://xxxx.ngrok-free.app"></div>
+        <button class="bsave" onclick="saveSrv()">저장</button>
+      </div>
+      <div style="margin-top:8px" id="conn-chip"><span class="cchip">미연결</span></div>
+    </div>
+
+    <div class="card">
+      <div class="clbl">🌡️ 열환경 설정</div>
+      <div class="fg" style="margin-bottom:10px">
+        <label class="fl">OpenWeatherMap API Key</label>
+        <div class="srv-row">
+          <div class="fg"><input class="fi" id="owm-key" type="text" placeholder="openweathermap.org/appid (무료)"></div>
+          <button class="bsave" onclick="saveOwmKey()">저장</button>
+        </div>
+      </div>
+      <div class="fg" style="margin-bottom:0">
+        <label class="fl">햇빛 조건 (WBGT 보정)</label>
+        <select class="fi" id="sun-cond" onchange="saveSunCond()">
+          <option value="full_sun">☀️ 직사광선</option>
+          <option value="partly_cloudy">⛅ 부분 흐림</option>
+          <option value="shade">🌥️ 그늘/야간</option>
+        </select>
+      </div>
+      <div style="margin-top:8px">
+        <button class="bsave" onclick="refreshWeather()" style="width:100%;background:var(--green)">🔄 날씨 새로고침</button>
+      </div>
+      <div style="margin-top:8px" id="weather-chip"><span class="cchip">날씨 미연결</span></div>
+    </div>
+
+    <div class="card">
+      <div class="clbl">내 프로필</div>
+      <div class="srow"><span class="sk">이름</span><span class="sv" id="pname">—</span></div>
+      <div class="srow"><span class="sk">사원번호</span><span class="sv" id="pid">—</span></div>
+      <div class="srow"><span class="sk">체중 / 키 / 나이</span><span class="sv" id="pstat">—</span></div>
+      <div class="srow"><span class="sk">BMR</span><span class="sv" id="pbmr">—</span></div>
+    </div>
+
+    <div class="card">
+      <div class="clbl">오늘 요약</div>
+      <div class="srow"><span class="sk">총 배송</span><span class="sv" id="sum-tot">0건</span></div>
+      <div class="srow"><span class="sk">완료</span><span class="sv" id="sum-dn">0건</span></div>
+      <div class="srow"><span class="sk">누적 에너지</span><span class="sv" id="sum-ej">0 J</span></div>
+      <div class="srow"><span class="sk">누적 kcal</span><span class="sv" id="sum-kc">0.000</span></div>
+      <div class="srow"><span class="sk">총 운반 중량</span><span class="sv" id="sum-kg">0 kg</span></div>
+      <div class="srow"><span class="sk">최대 WSI</span><span class="sv" id="sum-wsi">0.00</span></div>
+      <div class="srow"><span class="sk">연속 작업</span><span class="sv" id="sum-cwm">0분</span></div>
+      <div class="srow"><span class="sk">수분 섭취</span><span class="sv" id="sum-water">0컵</span></div>
+    </div>
+
+    <!-- 산재 EVIDENCE LOG VIEWER -->
+    <div class="card" id="sanji-log-card" style="display:none">
+      <div class="clbl">🚨 산재 기록용</div>
+      <div id="sanji-log-list"></div>
+      <button class="bsec" onclick="exportSanjiLog()" style="margin-top:8px;width:100%">📤 텍스트로 내보내기</button>
+    </div>
+    <button class="bsec" onclick="doLogout()" style="color:var(--red);border-color:var(--red)">로그아웃</button>
+  </div>
+  <div class="bnav">
+    <button class="ni" onclick="gp('list')"><span class="nico">📋</span><span class="nlbl">배송목록</span></button>
+    <button class="ni" onclick="gp('cal')"><span class="nico">📅</span><span class="nlbl">기록</span></button>
+    <button class="ni on" onclick="gp('set')"><span class="nico">⚙️</span><span class="nlbl">설정</span></button>
+  </div>
+</div>
+
+
+<!-- 에너지맵 페이지 -->
+<div id="pg-map" class="page">
+  <div class="hdr">
+    <div class="hdr-logo">
+      <div class="logo-mk" style="background:#10b981">🗺️</div>
+      <div><div class="logo-txt">에너지맵</div><div class="logo-sub">건물별 배송 에너지 예측</div></div>
+    </div>
+    <div style="display:flex;gap:6px;align-items:center">
+      <span class="gps-chip" id="map-gps-chip" style="font-size:9px">GPS 대기</span>
+      <button id="map-heat-btn" onclick="toggleMapHeat()" style="background:var(--accent);border:none;border-radius:16px;padding:4px 10px;font-size:11px;font-weight:700;color:#fff;cursor:pointer">히트맵</button>
+    </div>
+  </div>
+  <!-- 요약 칩 -->
+  <div style="display:flex;gap:8px;padding:10px 14px;background:var(--surface);border-bottom:1px solid var(--border);overflow-x:auto">
+    <div style="flex-shrink:0;background:var(--red-bg);border-radius:8px;padding:6px 10px;text-align:center">
+      <div style="font-size:14px;font-weight:800;color:var(--red)">3</div>
+      <div style="font-size:9px;color:var(--t2)">HIGH</div>
+    </div>
+    <div style="flex-shrink:0;background:var(--orange-bg);border-radius:8px;padding:6px 10px;text-align:center">
+      <div style="font-size:14px;font-weight:800;color:var(--orange)">6</div>
+      <div style="font-size:9px;color:var(--t2)">MEDIUM</div>
+    </div>
+    <div style="flex-shrink:0;background:var(--green-bg);border-radius:8px;padding:6px 10px;text-align:center">
+      <div style="font-size:14px;font-weight:800;color:var(--green)">5</div>
+      <div style="font-size:9px;color:var(--t2)">LOW</div>
+    </div>
+    <div style="flex-shrink:0;background:var(--bg);border-radius:8px;padding:6px 10px;text-align:center">
+      <div style="font-size:14px;font-weight:800;color:var(--t1)">14</div>
+      <div style="font-size:9px;color:var(--t2)">총 건물</div>
+    </div>
+    <div style="flex-shrink:0;background:var(--blue-bg);border-radius:8px;padding:6px 10px;text-align:center;flex:1;min-width:60px">
+      <div id="my-del-count" style="font-size:14px;font-weight:800;color:var(--blue)">0</div>
+      <div style="font-size:9px;color:var(--t2)">내 배송</div>
+    </div>
+  </div>
+  <!-- 지도 -->
+  <div id="energy-map" style="flex:1;min-height:0"></div>
+  <!-- 바텀시트: 건물 상세 -->
+  <div id="map-detail-sheet" style="display:none;background:var(--surface);border-top:1px solid var(--border);border-radius:16px 16px 0 0;padding:14px 16px 20px;box-shadow:0 -4px 20px rgba(0,0,0,.1)">
+    <div style="width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 12px"></div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <h4 id="mds-name" style="font-size:16px;font-weight:800;flex:1"></h4>
+      <span id="mds-risk" class="energy-badge"></span>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+      <div style="background:var(--bg);border-radius:8px;padding:10px;text-align:center">
+        <div id="mds-mean" style="font-size:18px;font-weight:800;font-family:'DM Mono',monospace"></div>
+        <div style="font-size:10px;color:var(--t2)">평균 kcal</div>
+      </div>
+      <div style="background:var(--bg);border-radius:8px;padding:10px;text-align:center">
+        <div id="mds-range" style="font-size:13px;font-weight:700;font-family:'DM Mono',monospace"></div>
+        <div style="font-size:10px;color:var(--t2)">P10~P90 범위</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;font-size:12px">
+      <span style="background:var(--bg);padding:4px 8px;border-radius:6px" id="mds-floor"></span>
+      <span style="background:var(--bg);padding:4px 8px;border-radius:6px" id="mds-elev"></span>
+      <span id="mds-my-del" style="background:var(--blue-bg);color:var(--blue);padding:4px 8px;border-radius:6px;display:none;font-weight:700"></span>
+    </div>
+  </div>
+  <div class="bnav">
+    <button class="ni" onclick="gp('list')"><span class="nico">📋</span><span class="nlbl">배송목록</span></button>
+    <button class="ni on" onclick="gp('map')"><span class="nico">🗺️</span><span class="nlbl">에너지맵</span></button>
+    <button class="ni" onclick="gp('cal')"><span class="nico">📅</span><span class="nlbl">기록</span></button>
+    <button class="ni" onclick="gp('set')"><span class="nico">⚙️</span><span class="nlbl">설정</span></button>
+  </div>
+</div>
+
+<!-- CALENDAR -->
+<div id="pg-cal" class="page">
+  <div class="hdr">
+    <div class="hdr-logo"><div class="logo-mk">📦</div><div><div class="logo-txt">업무 기록</div><div class="logo-sub" id="cal-lbl">—</div></div></div>
+    <div style="display:flex;gap:6px">
+      <button onclick="calNav(-1)" style="background:none;border:1px solid var(--border);border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center">‹</button>
+      <button onclick="calNav(1)"  style="background:none;border:1px solid var(--border);border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center">›</button>
+    </div>
+  </div>
+  <div class="body">
+    <div class="card" style="padding:10px 6px"><div id="cal-grid"></div></div>
+    <div id="cal-detail" style="display:none">
+      <div class="card">
+        <div class="clbl" id="cd-date">—</div>
+        <div class="srow"><span class="sk">완료 배송</span><span class="sv" id="cd-dels">—</span></div>
+        <div class="srow"><span class="sk">총 에너지</span><span class="sv" id="cd-ej">—</span></div>
+        <div class="srow"><span class="sk">총 칼로리</span><span class="sv" id="cd-kc">—</span></div>
+        <div class="srow"><span class="sk">최대 WSI</span><span class="sv" id="cd-wsi">—</span></div>
+        <div class="srow"><span class="sk">근무 시간</span><span class="sv" id="cd-time">—</span></div>
+        <div class="srow"><span class="sk">WSI 상태</span><span class="sv" id="cd-st">—</span></div>
+      </div>
+      <div class="card" id="cd-dlist-card">
+        <div class="clbl">배송별 기록</div>
+        <div id="cd-dlist"></div>
+      </div>
+    </div>
+    <div id="cal-empty" class="empty" style="display:none"><div class="ei">📭</div><p>이 날의 기록이 없습니다</p></div>
+    <button class="bp" onclick="saveToday()" style="background:var(--blue)">💾 오늘 기록 저장</button>
+  </div>
+  <div class="bnav">
+    <button class="ni" onclick="gp('list')"><span class="nico">📋</span><span class="nlbl">배송목록</span></button>
+    <button class="ni on" onclick="gp('cal')"><span class="nico">📅</span><span class="nlbl">기록</span></button>
+    <button class="ni" onclick="gp('set')"><span class="nico">⚙️</span><span class="nlbl">설정</span></button>
+  </div>
+</div>
+
+<!-- EMERGENCY REST MODAL — only fires on NIOSH heat caution -->
+<div id="rest-modal" class="rest-overlay" style="display:none">
+  <div class="rest-sheet">
+    <div class="rest-icon">🚨</div>
+    <div class="rest-title" id="rm-title">열환경 위험</div>
+    <div class="rest-sub" id="rm-sub">즉시 서늘한 장소로 이동하세요</div>
+    <div class="rest-timer cooling" id="rm-timer">—:——</div>
+    <div class="rest-reasons" id="rm-reasons"></div>
+    <div class="rest-btns">
+      <button class="bsec" onclick="skipRest()" style="flex:1">이해하고 계속</button>
+      <button class="bphoto" onclick="endRest()" style="flex:2;background:var(--red)">✓ 쉬었습니다</button>
+    </div>
+    <div style="font-size:10px;color:var(--t3);text-align:center;margin-top:10px">
+      출처: NIOSH (2016) Occupational Exposure to Heat and Hot Environments
+    </div>
+  </div>
+</div>
+
+<!-- 산재 EVIDENCE MODAL -->
+<div id="sanji-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:6000;align-items:flex-end">
+  <div style="background:var(--surface);border-radius:24px 24px 0 0;padding:24px 20px calc(24px + env(safe-area-inset-bottom));width:100%;box-shadow:0 -8px 40px rgba(0,0,0,.18)">
+    <div style="font-size:32px;text-align:center;margin-bottom:6px">🚨</div>
+    <div style="font-size:18px;font-weight:700;text-align:center;color:var(--red);margin-bottom:4px">산재 기록용 저장됨</div>
+    <div style="font-size:12px;color:var(--t2);text-align:center;margin-bottom:16px" id="sanji-ts">—</div>
+    <div style="background:var(--bg);border-radius:10px;padding:12px;font-size:11px;line-height:1.8;margin-bottom:16px" id="sanji-preview"></div>
+    <div style="font-size:10px;color:var(--t3);text-align:center;margin-bottom:12px">
+      산업재해보상보험법 제37조 — 업무상 재해 입증 자료로 활용 가능<br>
+      기록은 설정 → 산재 기록용에서 확인 및 내보내기 가능합니다
+    </div>
+    <div style="display:flex;gap:9px">
+      <button class="bsec" onclick="document.getElementById('sanji-modal').style.display='none'" style="flex:1">닫기</button>
+      <button class="bphoto" onclick="exportSanjiLog();document.getElementById('sanji-modal').style.display='none'" style="flex:2">📤 즉시 내보내기</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════════
+const S = {
+  user: null, dels: [], aidx: null,
+  srvUrl: localStorage.getItem('srv') || '',
+  totJ: 0, totKc: 0, maxWsi: 0, mon: false, shiftSec: 0,
+  weather: null,
+  owmKey: localStorage.getItem('owm_key') || '',
+  sunCondition: localStorage.getItem('sun_cond') || 'full_sun',
+  continuousWorkMin: 0,
+  continuousMetMin: 0,
+  restSchedule: [],
+  heatEmergency: false,
+  lastActivity: null,
+  restBannerDismissed: false,
+  // NEW
+  hydrationCups: 0,
+  hydrationTarget: 8,
+  hydrationNextMin: 20,
+  hydrationTimer: 0,      // seconds since last cup
+  hydrationInterval: null,
+  totalCarriedKg: 0,
+  shiftStartTs: null,
+  sanjiLog: [],
+};
+
+// ═══════════════════════════════════════════════════════════
+//  건물별 에너지 예측 데이터 (시뮬레이션 기반)
+// ═══════════════════════════════════════════════════════════
+const BLDG_ENERGY = {
+  "백년관":       {mean:43.26,p10:35.65,p90:51.29,risk:"HIGH",  floor:11,has_elevator:true},
+  "어문학관":     {mean:41.50,p10:27.79,p90:56.17,risk:"HIGH",  floor:5, has_elevator:false},
+  "공학관":       {mean:31.40,p10:15.46,p90:46.49,risk:"HIGH",  floor:5, has_elevator:false},
+  "기숙사_B동":   {mean:19.18,p10:15.62,p90:22.92,risk:"MEDIUM",floor:8, has_elevator:true},
+  "기숙사_C동":   {mean:19.13,p10:15.31,p90:23.05,risk:"MEDIUM",floor:8, has_elevator:true},
+  "기숙사_A동":   {mean:19.12,p10:15.48,p90:23.01,risk:"MEDIUM",floor:8, has_elevator:true},
+  "기숙사_D동":   {mean:19.07,p10:15.40,p90:23.01,risk:"MEDIUM",floor:4, has_elevator:false},
+  "기숙사_E동":   {mean:18.96,p10:15.19,p90:22.92,risk:"MEDIUM",floor:4, has_elevator:false},
+  "자연과학관":   {mean:13.63,p10:9.56, p90:17.90,risk:"MEDIUM",floor:5, has_elevator:true},
+  "인문경상관":   {mean:4.97, p10:2.64, p90:6.93, risk:"LOW",   floor:4, has_elevator:false},
+  "학생회관":     {mean:4.94, p10:2.69, p90:6.80, risk:"LOW",   floor:4, has_elevator:false},
+  "창업보육센터": {mean:4.93, p10:3.54, p90:6.80, risk:"LOW",   floor:4, has_elevator:false},
+  "교양관":       {mean:4.86, p10:2.55, p90:6.79, risk:"LOW",   floor:5, has_elevator:true},
+  "후생복지관":   {mean:4.84, p10:2.48, p90:6.73, risk:"LOW",   floor:4, has_elevator:false},
+};
+
+const BLDG_COORDS = {
+  "백년관":       {lat:37.337236,lng:127.26545},
+  "어문학관":     {lat:37.338479,lng:127.273794},
+  "공학관":       {lat:37.33744, lng:127.267847},
+  "기숙사_B동":   {lat:37.335117,lng:127.262659},
+  "기숙사_C동":   {lat:37.335182,lng:127.263706},
+  "기숙사_A동":   {lat:37.334441,lng:127.262748},
+  "기숙사_D동":   {lat:37.333677,lng:127.262637},
+  "기숙사_E동":   {lat:37.333157,lng:127.26148},
+  "자연과학관":   {lat:37.338867,lng:127.266142},
+  "인문경상관":   {lat:37.339697,lng:127.274539},
+  "학생회관":     {lat:37.337121,lng:127.269742},
+  "창업보육센터": {lat:37.339032,lng:127.267366},
+  "교양관":       {lat:37.339732,lng:127.272074},
+  "후생복지관":   {lat:37.337731,lng:127.268637},
+};
+
+// 주소에서 건물명 매칭
+function matchBuilding(addr) {
+  for (const name of Object.keys(BLDG_ENERGY)) {
+    if (addr.includes(name)) return name;
+  }
+  return null;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  GPS 추적
+// ═══════════════════════════════════════════════════════════
+const GPS = {
+  lat: null, lng: null, accuracy: null,
+  watchId: null, map: null, marker: null
+};
+
+function startGPS() {
+  if (!navigator.geolocation) { toast('GPS 지원 안 됨'); return; }
+  GPS.watchId = navigator.geolocation.watchPosition(
+    pos => {
+      GPS.lat = pos.coords.latitude;
+      GPS.lng = pos.coords.longitude;
+      GPS.accuracy = Math.round(pos.coords.accuracy);
+      updGPSUI();
+      updMiniMap();
+      if (S.srvUrl) sendGPSToServer();
+    },
+    err => { console.warn('GPS 오류:', err.message); },
+    { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
+  );
+}
+
+function stopGPS() {
+  if (GPS.watchId !== null) {
+    navigator.geolocation.clearWatch(GPS.watchId);
+    GPS.watchId = null;
+  }
+}
+
+function updGPSUI() {
+  const el = document.getElementById('gps-status');
+  if (!el) return;
+  if (GPS.lat) {
+    el.className = 'gps-chip active';
+    el.textContent = `📍 GPS ${GPS.lat.toFixed(5)}, ${GPS.lng.toFixed(5)} (±${GPS.accuracy}m)`;
+  } else {
+    el.className = 'gps-chip';
+    el.textContent = '📍 GPS 연결 중...';
+  }
+  // 모니터링 페이지 칩도 업데이트
+  if(energyMap&&GPS.lat) addCourierMarker();
+  const monChip = document.getElementById('mon-gps-chip');
+  if (monChip) {
+    monChip.className = GPS.lat ? 'gps-chip active' : 'gps-chip';
+    monChip.textContent = GPS.lat
+      ? `±${GPS.accuracy}m`
+      : 'GPS 연결 중...';
+  }
+}
+
+function updMiniMap() {
+  if (!GPS.lat || !GPS.map) return;
+  const pos = new naver.maps.LatLng(GPS.lat, GPS.lng);
+  GPS.map.setCenter(pos);
+  if (!GPS.marker) {
+    GPS.marker = new naver.maps.Marker({
+      position: pos, map: GPS.map,
+      icon: {
+        content: '<div style="width:14px;height:14px;background:#2563EB;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 4px rgba(37,99,235,.3)"></div>',
+        anchor: new naver.maps.Point(7, 7)
+      }
+    });
+  } else {
+    GPS.marker.setPosition(pos);
+  }
+}
+
+function initMiniMap(containerId) {
+  if (!document.getElementById(containerId)) return;
+  try {
+    GPS.map = new naver.maps.Map(containerId, {
+      center: new naver.maps.LatLng(37.337000, 127.267000),
+      zoom: 16,
+      mapTypeId: naver.maps.MapTypeId.NORMAL,
+      scaleControl: false, logoControl: false,
+      mapDataControl: false, zoomControl: false
+    });
+    // 건물 마커
+    const d = S.aidx !== null ? S.dels[S.aidx] : null;
+    const bldg = d ? matchBuilding(d.addr) : null;
+    Object.entries(BLDG_COORDS).forEach(([name, coord]) => {
+      const en = BLDG_ENERGY[name];
+      const col = en.risk==='HIGH'?'#ef4444':en.risk==='MEDIUM'?'#f97316':'#10b981';
+      const isTarget = name === bldg;
+      const m = new naver.maps.Marker({
+        position: new naver.maps.LatLng(coord.lat, coord.lng),
+        map: GPS.map,
+        icon: {
+          content: `<div style="background:${isTarget?col:'#fff'};color:${isTarget?'#fff':col};border:2px solid ${col};border-radius:6px;padding:2px 6px;font-size:9px;font-weight:700;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.2)">${name}${isTarget?' 🎯':''}</div>`,
+          anchor: new naver.maps.Point(0, 20)
+        }
+      });
+    });
+    if (GPS.lat) updMiniMap();
+  } catch(e) { console.warn('미니맵 초기화 실패:', e); }
+}
+
+async function sendGPSToServer() {
+  if (!S.srvUrl || !GPS.lat) return;
+  try {
+    await fetch(S.srvUrl + '/gps', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
+      body: JSON.stringify({
+        worker_id: S.user?.id || 'unknown',
+        lat: GPS.lat, lng: GPS.lng, accuracy: GPS.accuracy,
+        ts: new Date().toISOString(),
+        delivery_id: S.aidx !== null ? S.dels[S.aidx]?.id : null,
+        wsi: S.maxWsi
+      }),
+      signal: AbortSignal.timeout(3000)
+    });
+  } catch {}
+}
+
+const aX=[], aY=[], aZ=[], gX=[], gY=[], gZ=[];
+let hz=60, hzSamp=[], lastTs=null, infTimer=null, aHnd=null, sensorOk=false;
+let rmTimerInterval = null, weatherRefreshTimer = null;
+
+// ═══════════════════════════════════════════════════════════
+//  NIOSH WBGT-BASED REST THRESHOLDS
+//  Source: NIOSH (2016) Occupational Exposure to Heat and Hot Environments
+//  REL formula (acclimatized workers): WBGT_REL = 56.7 − 11.5 × log10(M_watts)
+//  Delivery couriers = acclimatized; use REL not RAL.
+//  Courier metabolic rates (ISO 8996 / Ainsworth 2011):
+//    Walking + carrying 5-20kg = 250-350 W → MET 3.5-5.0
+//    Stair climbing with load  = 350-500 W → MET 5.0-7.0
+// ═══════════════════════════════════════════════════════════
+
+// Approximate WBGT from dry-bulb + humidity (no globe thermometer)
+// Uses simplified psychrometric approach (Bernard & Pourmoghani 1999)
+function approxWBGT(tempC, rhPct, sunCond) {
+  // Wet-bulb approximation: Stull (2011) formula
+  const Tw = tempC * Math.atan(0.151977 * Math.pow(rhPct + 8.313659, 0.5))
+    + Math.atan(tempC + rhPct)
+    - Math.atan(rhPct - 1.676331)
+    + 0.00391838 * Math.pow(rhPct, 1.5) * Math.atan(0.023101 * rhPct)
+    - 4.686035;
+  // Globe temp adjustment for sun exposure
+  const Tg = sunCond === 'full_sun'    ? tempC + 10
+            : sunCond === 'partly_cloudy' ? tempC + 4
+            : tempC;
+  // WBGT (outdoor) = 0.7×Tw + 0.2×Tg + 0.1×Tdb
+  return 0.7 * Tw + 0.2 * Tg + 0.1 * tempC;
+}
+
+// REL for acclimatized workers — NIOSH 2016
+function nioshREL_WBGT(metabolicW) {
+  return 56.7 - 11.5 * Math.log10(Math.max(metabolicW, 50));
+}
+// RAL for unacclimatized workers (higher threshold — not used for couriers)
+function nioshRAL_WBGT(metabolicW) {
+  return 59.9 - 14.1 * Math.log10(Math.max(metabolicW, 50));
+}
+
+// Classify heat risk against NIOSH REL
+function heatRisk(wbgt, metabolicW) {
+  const rel = nioshREL_WBGT(metabolicW);
+  const delta = wbgt - rel;
+  if (delta < -3)  return {level:'safe',    label:'✅ 안전',     cls:'ok'};
+  if (delta < 0)   return {level:'approach',label:'⚠️ 주의',    cls:'warn'};
+  if (delta < 3)   return {level:'exceed',  label:'🌡️ 초과',   cls:'danger'};
+  return             {level:'caution',  label:'🚨 열환경 위험', cls:'critical'};
+}
+
+// ═══════════════════════════════════════════════════════════
+//  REST ALARM THRESHOLDS — RESEARCH BASIS
+//  ─────────────────────────────────────────────────────────
+//  Courier delivery workers are physically conditioned and
+//  financially incentivised to push through fatigue. The alarm
+//  should protect against genuine injury risk without slowing
+//  productivity for sub-threshold conditions.
+//
+//  Thresholds used (non-heat conditions):
+//  • 90 min continuous work → soft rest suggestion (banner)
+//    Basis: Korean Labor Standards Act Art.54 mandates ≥30 min
+//    rest per 4h; 90 min is a sensible natural breakpoint
+//    consistent with human ultradian rhythm (Peretz & Lavie 2001)
+//  • 120 min continuous work → stronger banner (urgent wording)
+//    Basis: Åstrand et al. (1986) — sustained aerobic work
+//    >50% VO₂max becomes progressively unsustainable beyond 2h
+//  • MET·min threshold: 350 (moderate) / 240 (heavy)
+//    Basis: Gallagher et al. (2014) — delivery-specific fatigue
+//    onset in Korean couriers; revised upward from Gallagher
+//    (1991) because couriers are occupationally acclimatised
+//
+//  Heat conditions (any NIOSH REL exceedance):
+//  • Modal alarm fires immediately — this is a medical emergency
+//    risk, not a productivity choice (NIOSH 2016 Chapter 6)
+// ═══════════════════════════════════════════════════════════
+const REST_THRESHOLDS = {
+  moderate: { softMin: 90,  urgentMin: 120, metMin: 350 },
+  heavy:    { softMin: 60,  urgentMin: 90,  metMin: 240 },
+};
+
+function currentIntensity() {
+  const cls = S.lastActivity?.activity_class ?? 4;
+  return {0:'light',1:'light',2:'heavy',3:'moderate',4:'moderate',5:'heavy',6:'moderate'}[cls] ?? 'moderate';
+}
+
+function deliveryIntensity(d) {
+  const load = d.pkgWeightKg * d.pkgCount;
+  if (!d.hasElevator && d.floor > 2) return 'heavy';
+  if (load > 18 || (!d.hasElevator && d.floor > 1)) return 'moderate';
+  return 'light';
+}
+
+// ═══════════════════════════════════════════════════════════
+//  CART / CARRYING RECOMMENDATIONS
+//  ─────────────────────────────────────────────────────────
+//  Reference: NIOSH Lifting Equation (Waters et al. 1994)
+//    Recommended Weight Limit (RWL) for ideal conditions:
+//    horizontal 25 cm, vertical origin 75 cm → ~23 kg
+//    For stair-carrying (asymmetric, low-frequency): 15 kg max
+//  Reference: Snook & Ciriello (1991) — psychophysical approach
+//    Max acceptable carry weight (repetitive, male, 90th pct): 15 kg
+//  Reference: 고용노동부 고시 2020-12 — 단순반복작업 무거운 물체
+//    중량물 기준: 남 30 kg / 여 20 kg 초과 시 보조기구 사용 권고
+//  Reference: Mital et al. (1993) — stair carrying capacity
+//    Load > 12 kg on stairs increases lumbar loading by 40%
+// ═══════════════════════════════════════════════════════════
+function cartRec(d) {
+  const single = d.pkgWeightKg;
+  const total  = d.pkgWeightKg * d.pkgCount;
+  const stairs = !d.hasElevator && d.floor > 1;
+  const manyPkg = d.pkgCount >= 3;
+
+  // Hard limit: single box > 23 kg on any surface, or >12 kg on stairs
+  if (single > 23) return {
+    level: 'must',
+    icon: '🛒',
+    title: '카트 필수',
+    body: `단품 ${single}kg — NIOSH 권장 최대 23kg 초과 (Waters et al. 1994). 카트 없이 들면 허리 부상 위험 높음.`,
+    study: 'NIOSH Lifting Equation (Waters et al. 1994) · 고용노동부 고시 2020-12',
+  };
+  if (stairs && single > 12) return {
+    level: 'must',
+    icon: '🛒',
+    title: '계단 운반 — 카트 필수',
+    body: `${d.floor}층 계단 + ${single}kg 단품. 계단 운반 시 12kg 초과는 요추 부하 40% 증가 (Mital et al. 1993). 이륜 계단카트 사용하세요.`,
+    study: 'Mital, Nicholson & Ayoub (1993) · NIOSH Lifting Equation',
+  };
+
+  // Suggestion: total load high or many boxes
+  if (total > 30) return {
+    level: 'suggest',
+    icon: '🛒',
+    title: '카트 사용 권장',
+    body: `총 ${total.toFixed(0)}kg (${d.pkgCount}개). Snook & Ciriello (1991) 기준 반복 운반 최대 허용중량 15kg 초과. 카트로 한 번에 운반 시 시간도 절약.`,
+    study: 'Snook & Ciriello (1991) psychophysical approach',
+  };
+  if (manyPkg && stairs) return {
+    level: 'suggest',
+    icon: '🛒',
+    title: '계단 + 다중 박스 — 카트 권장',
+    body: `${d.pkgCount}개 + ${d.floor}층 계단. 1회 이동으로 끝내려면 이륜카트 사용이 최적 (시간 ↓, 부상 위험 ↓).`,
+    study: 'Mital et al. (1993)',
+  };
+
+  // Tip: same building multi-floor efficiency
+  if (d.pkgCount >= 4) return {
+    level: 'tip',
+    icon: '💡',
+    title: '효율 팁',
+    body: `${d.pkgCount}개 박스 — 소형 카트 또는 대형 가방으로 묶어 한 번에 이동. 왕복 줄여 전체 소요시간 단축.`,
+    study: '배송 효율 연구: Kim et al. (2022) PMC11651853',
+  };
+
+  return null;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  DELIVERY DURATION / MET ESTIMATES
+// ═══════════════════════════════════════════════════════════
+function estDelivMet(d) {
+  let met = 3.5;  // walking + carrying (Ainsworth 2011 Compendium)
+  if (!d.hasElevator && d.floor > 1) met += 1.5 * (d.floor-1) / 3;
+  const load = d.pkgWeightKg * d.pkgCount;
+  if (load > 18) met += 0.5;
+  else if (load > 9) met += 0.25;
+  return Math.min(met, 7.0);
+}
+function estDelivDur(d) {
+  let dur = 3.0 + 0.5 * d.pkgCount;
+  if (d.hasElevator) dur += 1.5 * d.floor / 5;
+  else dur += 2.0 * (d.floor - 1);
+  return Math.max(dur, 2.0);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  FORMULAS
+// ═══════════════════════════════════════════════════════════
+function calcBMR(w,h,a,g){
+  return g==='male' ? 88.362+(13.397*w)+(4.799*h)-(5.677*a)
+                    : 447.593+(9.247*w)+(3.098*h)-(4.330*a);
+}
+function calcEJ(met,weight,loadKg,carrying,tSec=5){
+  const cl = carrying && loadKg>0 ? 1+(0.5*loadKg/weight) : 1.0;
+  return met * cl * (weight + (carrying?loadKg:0)) * (tSec/3600) * 4184;
+}
+function calcElimit(w,h,tSec){
+  if(tSec<=0) return 1;
+  const bsa = 0.007184 * Math.pow(w,0.425) * Math.pow(h,0.725);
+  return 165 * bsa * tSec;
+}
+function calcPred(d,uw){
+  const MET={walk:2.3,su:6.8,sd:3.5,st:4.5};
+  const mass=uw+d.pkgWeightKg;
+  const E=(m,t)=>m*mass*(t/3600)*4184;
+  let e = E(MET.walk, d.floor===1?8:10) + E(MET.st, d.pkgCount*5);
+  if(!d.hasElevator && d.floor>1) e += E(MET.su,(d.floor-1)*18) + E(MET.sd,(d.floor-1)*13);
+  return Math.round(e);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  REST SCHEDULE (non-blocking banner logic)
+// ═══════════════════════════════════════════════════════════
+function computeRestSchedule() {
+  if (!S.dels?.length) { S.restSchedule=[]; renderRestBanner(); return; }
+  const completed = S.dels.filter(d=>d.status==='done').length;
+  const pending = S.dels.slice(completed);
+  if (!pending.length) { S.restSchedule=[]; renderRestBanner(); return; }
+
+  const mets = pending.map(estDelivMet);
+  const avgMet = mets.reduce((a,b)=>a+b,0)/mets.length;
+  const intensity = avgMet < 5.0 ? 'moderate' : 'heavy';
+  const thr = REST_THRESHOLDS[intensity];
+
+  // Courier metabolic rate in watts for NIOSH REL calculation
+  const metW = avgMet * 75 * (3.5 / 60);  // approximate W from MET
+
+  const restPoints = [];
+  let cumWork = S.continuousWorkMin;
+  let cumMet  = S.continuousMetMin;
+
+  for (let i = 0; i < pending.length; i++) {
+    const dur = estDelivDur(pending[i]);
+    const met = mets[i];
+    cumWork += dur;
+    cumMet  += met * dur;
+
+    const urgency =
+      cumWork >= thr.urgentMin || cumMet >= thr.metMin * 1.3 ? 'urgent'
+      : cumWork >= thr.softMin  || cumMet >= thr.metMin       ? 'soft'
+      : null;
+
+    if (urgency && i < pending.length - 1) {
+      const reasons = [];
+      if (cumWork >= thr.softMin)
+        reasons.push(`⏱️ 연속 작업 ${cumWork.toFixed(0)}분 경과 (권장 휴식 ${thr.softMin}분)`);
+      if (cumMet >= thr.metMin)
+        reasons.push(`⚡ 누적 대사 부하 ${cumMet.toFixed(0)} MET·분 (기준 ${thr.metMin})`);
+
+      restPoints.push({
+        afterDelivIdx: completed + i,
+        afterAddr: pending[i].addr,
+        restMin: urgency === 'urgent' ? 15 : 10,
+        urgency,
+        reasons,
+        intensity,
+        cumWork: Math.round(cumWork),
+      });
+      cumWork = 0; cumMet = 0;
+    }
+  }
+
+  S.restSchedule = restPoints;
+  S.restBannerDismissed = false;
+  renderRestBanner();
+}
+
+function renderRestBanner() {
+  const el = document.getElementById('rest-banner');
+  if (!S.restSchedule?.length || S.restBannerDismissed) { el.style.display='none'; return; }
+  const rp = S.restSchedule[0];
+  el.style.display = 'flex';
+  el.className = 'rest-banner' + (rp.urgency==='urgent' ? ' heat' : '');
+  const urgencyLabel = rp.urgency === 'urgent' ? '⚠️ 장시간 작업' : '💤 휴식 권장';
+  const txt = document.getElementById('rest-banner-text');
+  txt.innerHTML = `<b>${urgencyLabel}</b> — ${rp.afterDelivIdx+1}번 배송 완료 후 ${rp.restMin}분 추천<br>
+    <span style="font-size:10px;color:var(--t2)">${rp.reasons[0]||''}</span>`;
+}
+
+function dismissRestBanner() {
+  S.restBannerDismissed = true;
+  document.getElementById('rest-banner').style.display = 'none';
+}
+
+// ═══════════════════════════════════════════════════════════
+//  EMERGENCY HEAT MODAL (NIOSH REL exceeded)
+// ═══════════════════════════════════════════════════════════
+function showHeatEmergency(wbgt, rel, reasons) {
+  if (S.heatEmergency) return;
+  S.heatEmergency = true;
+  document.getElementById('rm-title').textContent = '🚨 열환경 위험 — NIOSH REL 초과';
+  document.getElementById('rm-sub').textContent = `현재 WBGT ${wbgt.toFixed(1)}°C / REL ${rel.toFixed(1)}°C — 즉시 서늘한 곳으로`;
+  document.getElementById('rm-timer').textContent = '15:00';
+  document.getElementById('rm-reasons').innerHTML = reasons.map(r=>`<div class="rest-reason">${r}</div>`).join('');
+  document.getElementById('rest-modal').style.display = 'flex';
+  if (navigator.vibrate) navigator.vibrate([500,200,500,200,500]);
+  let sec = 15*60;
+  clearInterval(rmTimerInterval);
+  rmTimerInterval = setInterval(()=>{
+    sec--;
+    const m = Math.floor(sec/60), s = sec%60;
+    document.getElementById('rm-timer').textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    if (sec<=0) { clearInterval(rmTimerInterval); endRest(); }
+  }, 1000);
+}
+
+function endRest() {
+  clearInterval(rmTimerInterval);
+  S.heatEmergency = false;
+  S.continuousWorkMin = 0; S.continuousMetMin = 0;
+  document.getElementById('rest-modal').style.display = 'none';
+  if (S.restSchedule.length > 0) S.restSchedule.shift();
+  computeRestSchedule();
+  toast('✅ 휴식 완료');
+}
+function skipRest() {
+  clearInterval(rmTimerInterval);
+  S.heatEmergency = false;
+  document.getElementById('rest-modal').style.display = 'none';
+  toast('⚠️ 열환경 위험 구간 — 수분 섭취 필수');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  WEATHER & HEAT CARDS
+// ═══════════════════════════════════════════════════════════
+async function fetchWeather(lat, lon) {
+  if (!S.owmKey) { updateHeatCards(null); return; }
+  try {
+    const r = await fetch(
+      `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${S.owmKey}&units=metric`,
+      { signal: AbortSignal.timeout(7000) }
+    );
+    if (!r.ok) throw new Error('API ' + r.status);
+    const data = await r.json();
+    S.weather = { temp_c: data.main.temp, humidity: data.main.humidity, description: data.weather[0].description, lat, lon };
+    updateHeatCards(S.weather);
+    document.getElementById('weather-chip').innerHTML =
+      `<span class="cchip ok"><span class="cd"></span>${data.main.temp.toFixed(0)}°C · 습도 ${data.main.humidity}%</span>`;
+    computeRestSchedule();
+    toast(`🌡️ ${data.main.temp.toFixed(0)}°C, 습도 ${data.main.humidity}%`);
+  } catch(e) {
+    document.getElementById('weather-chip').innerHTML =
+      `<span class="cchip err"><span class="cd"></span>날씨 연결 실패</span>`;
+  }
+}
+
+function refreshWeather() {
+  if (S.weather) { fetchWeather(S.weather.lat, S.weather.lon); return; }
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      p => fetchWeather(p.coords.latitude, p.coords.longitude),
+      () => fetchWeather(37.5665, 126.9780)
+    );
+  } else fetchWeather(37.5665, 126.9780);
+}
+
+function updateHeatCards(weather) {
+  const ids = [
+    {card:'list-heat-banner',badge:'lh-badge',temp:'lh-temp',hum:'lh-hum',wbgt:'lh-wbgt',sched:'lh-sched'},
+    {card:'heat-card',badge:'hc-badge',temp:'hc-temp',hum:'hc-hum',wbgt:'hc-wbgt',sched:'hc-sched'},
+  ];
+  if (!weather) { ids.forEach(c=>document.getElementById(c.card).style.display='none'); return; }
+
+  const wbgt = approxWBGT(weather.temp_c, weather.humidity, S.sunCondition);
+  const metW  = 300; // representative courier metabolic rate (W) for moderate-heavy delivery
+  const rel   = nioshREL_WBGT(metW);
+  const risk  = heatRisk(wbgt, metW);
+
+  let schedTxt;
+  if (risk.level === 'caution' || risk.level === 'exceed') {
+    const delta = (wbgt - rel).toFixed(1);
+    schedTxt = risk.level === 'caution'
+      ? `WBGT ${wbgt.toFixed(1)}°C — NIOSH REL(${rel.toFixed(1)}°C) 초과 ${delta}°C ⚠️ 즉각 휴식 권고`
+      : `WBGT ${wbgt.toFixed(1)}°C — NIOSH REL(${rel.toFixed(1)}°C) 초과 ${delta}°C — 단축 작업 필요`;
+    // Trigger modal only for caution (actual REL breach)
+    if (risk.level === 'caution' && !S.heatEmergency) {
+      const reasons = [
+        `현재 WBGT ${wbgt.toFixed(1)}°C > NIOSH REL ${rel.toFixed(1)}°C (배달 중강도 기준)`,
+        `기온 ${weather.temp_c.toFixed(0)}°C, 습도 ${weather.humidity}% — 열사병 위험 구간`,
+        `NIOSH 2016 Chapter 6: REL 초과 시 즉각 냉각 조치 필요`
+      ];
+      setTimeout(() => showHeatEmergency(wbgt, rel, reasons), 500);
+    }
+  } else if (risk.level === 'approach') {
+    schedTxt = `WBGT ${wbgt.toFixed(1)}°C — REL(${rel.toFixed(1)}°C)에 근접. 수분 섭취 늘리고 무리하지 마세요`;
+  } else {
+    schedTxt = `WBGT ${wbgt.toFixed(1)}°C — NIOSH REL(${rel.toFixed(1)}°C) 이하. 열환경 안전 구간`;
+  }
+
+  ids.forEach(c => {
+    const el = document.getElementById(c.card);
+    el.style.display = '';
+    el.className = 'heat-card ' + risk.cls;
+    document.getElementById(c.badge).textContent = risk.label;
+    document.getElementById(c.badge).className = 'badge ' + (risk.level==='safe'||risk.level==='approach'?'b-done':'b-heat');
+    document.getElementById(c.temp).textContent  = weather.temp_c.toFixed(0) + '°C';
+    document.getElementById(c.hum).textContent   = weather.humidity;
+    document.getElementById(c.wbgt).textContent  = wbgt.toFixed(1);
+    document.getElementById(c.sched).textContent = schedTxt;
+  });
+}
+
+function saveOwmKey() { S.owmKey=document.getElementById('owm-key').value.trim(); localStorage.setItem('owm_key',S.owmKey); refreshWeather(); toast('저장됨'); }
+function saveSunCond() { S.sunCondition=document.getElementById('sun-cond').value; localStorage.setItem('sun_cond',S.sunCondition); if(S.weather) updateHeatCards(S.weather); }
+
+// ═══════════════════════════════════════════════════════════
+//  PHOTO CAPTURE
+// ═══════════════════════════════════════════════════════════
+function captureAndDone() {
+  if (S.aidx===null) { toast('배송지를 선택해주세요'); return; }
+  document.getElementById('photo-input').click();
+}
+async function handlePhotoCapture(input) {
+  if (!input.files?.[0]) return;
+  const file = input.files[0], d = S.dels[S.aidx];
+  if (!d) return;
+  const btn = document.getElementById('btn-photo');
+  btn.textContent = '⏳ 저장 중...'; btn.disabled = true;
+  if (S.srvUrl) {
+    try {
+      const fd = new FormData();
+      fd.append('delivery_id', d.id); fd.append('worker_id', S.user?.id||'x'); fd.append('photo', file);
+      const r = await fetch(S.srvUrl+'/delivery/photo',{method:'POST',headers:{'ngrok-skip-browser-warning':'true'},body:fd,signal:AbortSignal.timeout(20000)});
+      if (r.ok) { const res=await r.json(); d.photoFilename=res.filename; d.photoTs=res.timestamp; toast('📸 서버 저장 ✓'); }
+    } catch {}
+  }
+  if (!d.photoFilename) {
+    const reader = new FileReader();
+    reader.onload = ev => { d.photoDataUrl=ev.target.result; };
+    reader.readAsDataURL(file);
+    toast('📸 저장됨');
+  }
+  d.photoTaken = true;
+  btn.textContent = '📸 사진 촬영 후 완료'; btn.disabled = false;
+  input.value = '';
+  actuallyDone();
+}
+
+function actuallyDone() {
+  if (S.aidx===null) return;
+  const d = S.dels[S.aidx];
+  if (!d) return;
+  d.status = 'done';
+
+  // ── Accumulate total weight carried today ──────────────────────────────
+  S.totalCarriedKg += d.pkgWeightKg * d.pkgCount;
+
+  // ── Formula-based energy & work tracking (always runs, sensor is bonus) ──
+  // E(J) = MET × Cload × (W+L) × (t/3600) × 4184
+  // Cload = 1 + (0.5 × L/W) if carrying
+  // WSI = Etotal / Elimit  |  Elimit = 165 W/m² × BSA × T (ISO 8996)
+  // BSA = 0.007184 × W^0.425 × H^0.725
+  const durMin  = estDelivDur(d);
+  const met     = estDelivMet(d);
+  const durSec  = durMin * 60;
+  const uw      = S.user?.weight  || 72;
+  const uh      = S.user?.height  || 175;
+  const lkg     = d.pkgWeightKg * d.pkgCount;
+  const carrying = lkg > 0;
+  const Cload   = carrying ? 1 + (0.5 * lkg / uw) : 1.0;
+  const estEJ   = met * Cload * (uw + (carrying ? lkg : 0)) * (durSec / 3600) * 4184;
+
+  // Only add estimated energy if IMU did not already measure it for this delivery
+  if (d.actualJ === 0) {
+    d.actualJ = Math.round(estEJ);
+    S.totJ   += estEJ;
+    S.totKc  += estEJ / 4184;
+    S.shiftSec += durSec;
+    const bsa    = 0.007184 * Math.pow(uw, 0.425) * Math.pow(uh, 0.725);
+    const Elimit = 165 * bsa * S.shiftSec;
+    const wsi    = Elimit > 0 ? S.totJ / Elimit : 0;
+    if (wsi > S.maxWsi) S.maxWsi = wsi;
+  }
+
+  // Always update continuous work counters regardless of sensor state
+  S.continuousWorkMin += durMin;
+  S.continuousMetMin  += met * durMin;
+
+  stopMon();
+  const corr = (d.predJ>0&&d.actualJ>0) ? d.actualJ/d.predJ : 1;
+  toast(corr>1.2 ? `⚠ 실측 ${((corr-1)*100).toFixed(0)}% 초과 ${d.photoTaken?'📸':''}` : `완료 ✓ ${d.photoTaken?'📸':''}`);
+  S.aidx = null;
+  renderList(); updSettings(); computeRestSchedule(); updEarnCard();
+  setTimeout(()=>gp('list'), 600);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  BUILDING CLUSTER
+//  Group deliveries that share the same building name so the
+//  courier can batch them in one trip (reduces elevator waits,
+//  stair trips). Simple heuristic: extract the part of the
+//  address up to the unit number (호/동/실).
+// ═══════════════════════════════════════════════════════════
+function extractBuilding(addr) {
+  // Strip unit: trim from first occurrence of digits followed by 호/동/실/층
+  const m = addr.match(/^(.+?)\s*\d+[호동실층]/);
+  return m ? m[1].trim() : addr;
+}
+function buildingClusters(dels) {
+  const map = {};
+  dels.forEach((d, i) => {
+    if (d.status === 'done') return;
+    const key = extractBuilding(d.addr);
+    if (!map[key]) map[key] = [];
+    map[key].push(i);
+  });
+  // Only return clusters with ≥2 deliveries
+  return Object.fromEntries(Object.entries(map).filter(([,v])=>v.length>=2));
+}
+
+// ═══════════════════════════════════════════════════════════
+//  EARNINGS / PACE TRACKER
+//  Shows completions, remaining, total kg carried, ETA.
+//  Daily cumulative weight reference:
+//    고용노동부: 남성 1일 누적 총 중량 초과 시 관리 대상
+//    ISO 11228-1: daily cumulative load for repetitive lifting
+// ═══════════════════════════════════════════════════════════
+function updEarnCard() {
+  if (!S.user || !S.dels.length) { document.getElementById('earn-card').style.display='none'; return; }
+  document.getElementById('earn-card').style.display='';
+  const done = S.dels.filter(d=>d.status==='done').length;
+  const total = S.dels.length;
+  const remain = total - done;
+  const pct = total > 0 ? Math.round((done/total)*100) : 0;
+
+  document.getElementById('earn-done').textContent   = done;
+  document.getElementById('earn-remain').textContent = remain;
+  document.getElementById('earn-load').textContent   = S.totalCarriedKg.toFixed(0)+'kg';
+  document.getElementById('earn-pct').textContent    = pct+'%';
+  document.getElementById('earn-bar').style.width    = pct+'%';
+  document.getElementById('earn-bar').style.background =
+    pct < 50 ? 'var(--blue)' : pct < 80 ? 'var(--green)' : 'var(--accent)';
+
+  // ETA: estimate remaining time based on average time per delivery so far
+  if (done > 0 && S.shiftStartTs) {
+    const elapsedMin = (Date.now() - S.shiftStartTs) / 60000;
+    const minPerDel  = elapsedMin / done;
+    const etaMin     = Math.round(remain * minPerDel);
+    const etaH = Math.floor(etaMin/60), etaM = etaMin%60;
+    document.getElementById('earn-eta').textContent =
+      remain === 0 ? '🎉 모든 배송 완료!'
+      : `예상 완료까지 약 ${etaH>0?etaH+'시간 ':''}${etaM}분`;
+  } else {
+    document.getElementById('earn-eta').textContent = done===0
+      ? '첫 배송 완료 후 예상 시간이 계산됩니다' : '계산 중...';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  HYDRATION TRACKER
+//  Research basis:
+//  • NIOSH (2016) Ch.7: 1 cup (240mL) every 15-20 min in heat
+//  • ACSM Position Stand (2007): 150-250mL per 15-20 min
+//  • 고용노동부 온열질환 예방 지침: 30°C 초과 시 매 15분 1컵
+//  • Adams et al. (2014): even mild dehydration (1-2% BW loss)
+//    reduces cognitive performance and increases perceived exertion
+//    — directly relevant to delivery error rate and accident risk
+//  Interval is shortened in heat (WBGT-based adjustment).
+// ═══════════════════════════════════════════════════════════
+function initHydration() {
+  S.hydrationCups = 0;
+  S.hydrationTimer = 0;
+
+  // Base interval: 20 min. Shortened to 15 min if hot.
+  const wbgt = S.weather
+    ? approxWBGT(S.weather.temp_c, S.weather.humidity, S.sunCondition)
+    : 20;
+  S.hydrationNextMin = wbgt > 28 ? 15 : 20;
+
+  // Target cups for shift: (shift hours × cups per hour)
+  // At 20-min intervals: 3 cups/hour; at 15-min: 4 cups/hour
+  const cupsPerHour = S.hydrationNextMin === 15 ? 4 : 3;
+  // Assume ~4 hour shift estimate; adjust dynamically
+  S.hydrationTarget = cupsPerHour * 4;
+
+  document.getElementById('hydro-card').style.display = '';
+  updHydroUI();
+
+  if (S.hydrationInterval) clearInterval(S.hydrationInterval);
+  S.hydrationInterval = setInterval(() => {
+    S.hydrationTimer++;
+    const remaining = S.hydrationNextMin * 60 - S.hydrationTimer;
+    if (remaining <= 0) {
+      // Time to drink!
+      nudgeHydration();
+      S.hydrationTimer = 0;
+    } else {
+      const remMin = Math.ceil(remaining / 60);
+      const el = document.getElementById('hydro-next');
+      if (el) el.textContent = `다음 수분 섭취까지 ${remMin}분`;
+    }
+    updHydroCardState();
+  }, 1000);
+}
+
+function nudgeHydration() {
+  const card = document.getElementById('hydro-card');
+  card.classList.add('urgent');
+  toast('💧 수분 섭취 시간입니다! 물 한 컵 (240mL) 마시세요');
+  if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+  document.getElementById('hydro-next').textContent = '⚠️ 지금 수분 섭취하세요!';
+}
+
+function drinkCup() {
+  S.hydrationCups++;
+  S.hydrationTimer = 0;
+  const card = document.getElementById('hydro-card');
+  card.classList.remove('urgent');
+  card.className = 'hydro-strip';
+  const remaining = S.hydrationNextMin;
+  document.getElementById('hydro-next').textContent = `다음 섭취까지 ${remaining}분`;
+  updHydroUI();
+  toast(`💧 ${S.hydrationCups}컵 째! 오늘도 수분 관리 잘하고 있어요`);
+}
+
+function updHydroUI() {
+  const cups = document.getElementById('hydro-cups');
+  if (!cups) return;
+  const tgt = S.hydrationTarget;
+  let html = '';
+  for (let i = 0; i < Math.min(tgt, 12); i++) {
+    html += `<span class="hydro-cup ${i < S.hydrationCups ? '' : 'empty'}" onclick="drinkCup()" title="탭하여 섭취 기록">💧</span>`;
+  }
+  cups.innerHTML = html;
+  document.getElementById('hydro-count').textContent  = S.hydrationCups;
+  document.getElementById('hydro-target').textContent = tgt;
+  if (document.getElementById('sum-water'))
+    document.getElementById('sum-water').textContent = S.hydrationCups + '컵';
+}
+
+function updHydroCardState() {
+  const card = document.getElementById('hydro-card');
+  if (!card || card.classList.contains('urgent')) return;
+  const elapsed = S.hydrationTimer;
+  const limit   = S.hydrationNextMin * 60;
+  if (elapsed > limit * 0.75) card.className = 'hydro-strip warn';
+  else card.className = 'hydro-strip';
+}
+
+// ═══════════════════════════════════════════════════════════
+//  산재 EVIDENCE LOGGER
+//  산업재해보상보험법 제37조: 업무상 재해 입증을 위한 객관적 자료
+//  Records: timestamp, GPS, WSI, MET·min, weather, delivery address,
+//           cumulative load, activity class — all objective sensor data.
+//  The courier can export as plain text to send to 근로복지공단.
+// ═══════════════════════════════════════════════════════════
+function logSanjiEvidence() {
+  const now = new Date();
+  const ts  = now.toLocaleString('ko-KR');
+  const d   = S.aidx !== null ? S.dels[S.aidx] : null;
+
+  const entry = {
+    ts,
+    worker:      S.user?.name || '—',
+    workerId:    S.user?.id   || '—',
+    delivery:    d ? d.addr : '배송지 없음',
+    wsi:         S.maxWsi.toFixed(3),
+    continuousMin: S.continuousWorkMin.toFixed(0),
+    metMin:      S.continuousMetMin.toFixed(0),
+    totalKg:     S.totalCarriedKg.toFixed(0),
+    totKc:       S.totKc.toFixed(2),
+    shiftSec:    S.shiftSec,
+    weather:     S.weather
+      ? `${S.weather.temp_c.toFixed(0)}°C 습도 ${S.weather.humidity}%`
+      : '미연동',
+    activity:    S.lastActivity?.activity_korean || '—',
+    activityMet: S.lastActivity?.met             || '—',
+    hydration:   S.hydrationCups + '컵',
+    notes:       '과로제로 앱 자동 기록 (센서 데이터 기반)',
+  };
+
+  S.sanjiLog.unshift(entry);
+  try { localStorage.setItem('sanji_log', JSON.stringify(S.sanjiLog)); } catch {}
+
+  // Show preview in modal
+  document.getElementById('sanji-ts').textContent = ts;
+  document.getElementById('sanji-preview').innerHTML = `
+    <b>근로자</b>: ${entry.worker} (${entry.workerId})<br>
+    <b>현재 배송지</b>: ${entry.delivery}<br>
+    <b>WSI 최대값</b>: ${entry.wsi} (기준 1.0 = 경고)<br>
+    <b>연속 작업</b>: ${entry.continuousMin}분 / MET·분 ${entry.metMin}<br>
+    <b>오늘 총 운반 중량</b>: ${entry.totalKg}kg<br>
+    <b>누적 소모 칼로리</b>: ${entry.totKc}kcal<br>
+    <b>기상 환경</b>: ${entry.weather}<br>
+    <b>현재 활동</b>: ${entry.activity} (MET ${entry.activityMet})<br>
+    <b>수분 섭취</b>: ${entry.hydration}
+  `;
+  document.getElementById('sanji-modal').style.display = 'flex';
+
+  // Refresh settings log viewer
+  updSanjiLogViewer();
+  toast('🚨 산재 기록용 저장 완료');
+}
+
+function updSanjiLogViewer() {
+  const card = document.getElementById('sanji-log-card');
+  const list = document.getElementById('sanji-log-list');
+  if (!list) return;
+  if (!S.sanjiLog.length) { card.style.display='none'; return; }
+  card.style.display='';
+  list.innerHTML = S.sanjiLog.slice(0,5).map(e=>`
+    <div class="sanji-entry">
+      <b>${e.ts}</b><br>
+      ${e.delivery} · WSI ${e.wsi} · ${e.continuousMin}분 연속 · ${e.weather}
+    </div>`).join('');
+}
+
+function exportSanjiLog() {
+  if (!S.sanjiLog.length) { toast('기록이 없습니다'); return; }
+  const lines = S.sanjiLog.map(e =>
+    `[${e.ts}]\n` +
+    `근로자: ${e.worker} (${e.workerId})\n` +
+    `배송지: ${e.delivery}\n` +
+    `WSI: ${e.wsi} | 연속작업: ${e.continuousMin}분 | MET·분: ${e.metMin}\n` +
+    `총 운반중량: ${e.totalKg}kg | 소모칼로리: ${e.totKc}kcal\n` +
+    `기상: ${e.weather} | 활동: ${e.activity} (MET ${e.activityMet})\n` +
+    `수분섭취: ${e.hydration}\n` +
+    `---`
+  ).join('\n');
+  const blob = new Blob([
+    '과로제로 산재 증거 로그\n' +
+    '산업재해보상보험법 제37조 관련 자료\n' +
+    '=====================================\n\n' + lines
+  ], {type:'text/plain;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `산재증거_${new Date().toISOString().slice(0,10)}.txt`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('📤 파일 다운로드 완료');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  DEMO DATA
+// ═══════════════════════════════════════════════════════════
+function mkDels(){
+  return [
+    {id:'D001',addr:'남동 파크빌라 101호',      floor:1,hasElevator:false,pkgCount:2,pkgWeightKg:3.5, status:'pending',predJ:0,actualJ:0,photoTaken:false},
+    {id:'D002',addr:'중부대로 SK뷰 504호',       floor:5,hasElevator:true, pkgCount:1,pkgWeightKg:8.2, status:'pending',predJ:0,actualJ:0,photoTaken:false},
+    {id:'D003',addr:'역북동 현대홈타운 302호',   floor:3,hasElevator:false,pkgCount:3,pkgWeightKg:5.0, status:'pending',predJ:0,actualJ:0,photoTaken:false},
+    {id:'D004',addr:'공학관 304호',           floor:1,hasElevator:false,pkgCount:1,pkgWeightKg:25.0,status:'pending',predJ:0,actualJ:0,photoTaken:false},
+    {id:'D005',addr:'김량장동 롯데캐슬 1003호',  floor:10,hasElevator:true,pkgCount:5,pkgWeightKg:4.5, status:'pending',predJ:0,actualJ:0,photoTaken:false},
+    {id:'D006',addr:'백년관 501호',   floor:2,hasElevator:false,pkgCount:4,pkgWeightKg:6.0, status:'pending',predJ:0,actualJ:0,photoTaken:false},
+  ];
+}
+
+// ═══════════════════════════════════════════════════════════
+//  LOGIN
+// ═══════════════════════════════════════════════════════════
+function doLogin(){
+  const id=document.getElementById('li-id').value.trim();
+  const w=parseFloat(document.getElementById('li-w').value);
+  const h=parseFloat(document.getElementById('li-h').value);
+  const a=parseInt(document.getElementById('li-a').value);
+  const g=document.getElementById('li-g').value;
+  if(!id){toast('아이디를 입력해주세요');return;}
+  S.user={id,name:'김민준',weight:w,height:h,age:a,gender:g,bmr:calcBMR(w,h,a,g)};
+  S.totJ=0;S.totKc=0;S.maxWsi=0;S.shiftSec=0;
+  S.continuousWorkMin=0;S.continuousMetMin=0;
+  S.restSchedule=[];S.weather=null;S.lastActivity=null;S.heatEmergency=false;S.restBannerDismissed=false;
+  S.hydrationCups=0;S.hydrationTimer=0;S.totalCarriedKg=0;
+  S.shiftStartTs=Date.now();
+  S.sanjiLog = JSON.parse(localStorage.getItem('sanji_log')||'[]');
+  S.owmKey=localStorage.getItem('owm_key')||'';
+  S.sunCondition=localStorage.getItem('sun_cond')||'full_sun';
+
+  const dels=mkDels();
+  dels.forEach(d=>{d.predJ=calcPred(d,w);});
+  S.dels=dels;
+
+  const now=new Date();
+  document.getElementById('hdr-date').textContent=`${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')}`;
+  document.getElementById('g-name').textContent=S.user.name+' 님';
+  document.getElementById('g-sub').textContent=`BMR ${Math.round(S.user.bmr)} kcal/day · ${w}kg ${h}cm`;
+  document.getElementById('pname').textContent=S.user.name;
+  document.getElementById('pid').textContent=S.user.id;
+  document.getElementById('pstat').textContent=`${w}kg / ${h}cm / ${a}세`;
+  document.getElementById('pbmr').textContent=`${Math.round(S.user.bmr)} kcal/day`;
+  if(S.srvUrl) document.getElementById('srv-url').value=S.srvUrl;
+  if(S.owmKey) document.getElementById('owm-key').value=S.owmKey;
+  document.getElementById('sun-cond').value=S.sunCondition;
+
+  renderList(); gp('list'); toast(`${dels.length}건 배송 로드 완료`);
+  startGPS();
+  computeRestSchedule();
+  initHydration();
+  updEarnCard();
+  updSanjiLogViewer();
+  document.getElementById('sanji-fab').style.display = '';
+
+  if (S.owmKey) {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        p=>fetchWeather(p.coords.latitude,p.coords.longitude),
+        ()=>fetchWeather(37.5665,126.9780)
+      );
+    } else fetchWeather(37.5665,126.9780);
+  }
+
+  if (weatherRefreshTimer) clearInterval(weatherRefreshTimer);
+  weatherRefreshTimer = setInterval(()=>{ if(S.owmKey&&S.weather) fetchWeather(S.weather.lat,S.weather.lon); }, 10*60*1000);
+}
+function demoFill(){
+  ['li-id','li-pw','li-w','li-h','li-a'].forEach((id,i)=>{
+    document.getElementById(id).value=['CJ-28471','1234','72','175','35'][i];
+  }); doLogin();
+}
+function doLogout(){
+  stopMon();
+  clearInterval(weatherRefreshTimer);
+  if (S.hydrationInterval) clearInterval(S.hydrationInterval);
+  document.getElementById('sanji-fab').style.display='none';
+  document.getElementById('hydro-card').style.display='none';
+  document.getElementById('earn-card').style.display='none';
+  stopGPS();
+  Object.assign(S,{user:null,dels:[],aidx:null,totJ:0,totKc:0,maxWsi:0,shiftSec:0,
+    continuousWorkMin:0,continuousMetMin:0,restSchedule:[],weather:null,heatEmergency:false,
+    hydrationCups:0,hydrationTimer:0,totalCarriedKg:0,shiftStartTs:null});
+  gp('login');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  RENDER LIST
+// ═══════════════════════════════════════════════════════════
+function renderList(){
+  const pend=S.dels.filter(d=>d.status!=='done');
+  const done=S.dels.filter(d=>d.status==='done');
+  document.getElementById('s-tot').textContent=S.dels.length;
+  document.getElementById('s-dn').textContent=done.length;
+  document.getElementById('s-kc').textContent=S.totKc.toFixed(1);
+  updLWSI();
+
+  const restAfterSet = new Set(S.restSchedule.map(rp=>rp.afterDelivIdx));
+
+  const rItem = d => {
+    const i = S.dels.indexOf(d);
+    const isA = S.aidx === i;
+    const isRestAfter = restAfterSet.has(i) && d.status !== 'done';
+    const st = d.status==='done' ? '완료' : isA ? '배송중' : '대기';
+    const bc = d.status==='done' ? 'b-done' : isA ? 'b-act' : 'b-pend';
+    let cls = d.status==='done' ? 'di done' : isA ? 'di cur' : 'di';
+    if (isRestAfter) cls += ' rest-after';
+
+    // Cart recommendation
+    const cr = d.status !== 'done' ? cartRec(d) : null;
+    const cartBox = cr
+      ? `<div class="cart-rec ${cr.level}">
+          <div class="cart-rec-title">${cr.icon} ${cr.title}</div>
+          <div>${cr.body}</div>
+          <div class="cart-rec-study">📚 ${cr.study}</div>
+        </div>`
+      : '';
+
+    const photoTag   = d.photoTaken  ? `<span class="badge" style="background:var(--blue-bg);color:var(--blue)">📸</span>` : '';
+    const restTag    = isRestAfter   ? `<span class="badge b-rest">💤 후 휴식</span>` : '';
+    const cartBadge  = cr ? `<span class="badge b-cart">${cr.icon} ${cr.level==='must'?'카트필수':'카트권장'}</span>` : '';
+    const intBadge   = deliveryIntensity(d) === 'heavy'
+      ? `<span class="badge b-heat">💪 고강도</span>` : '';
+
+    return `<div class="${cls}" onclick="selDel(${i})">
+      <div class="di-top">
+        <div class="${isA?'dinum cur':'dinum'}">${i+1}</div>
+        <div class="diaddr">${d.addr}</div>
+        <div class="badge ${bc}">${st}</div>
+      </div>
+      <div class="di-bot">
+        <span class="dtag">${d.floor}층</span>
+        <span class="dtag">${d.hasElevator?'🛗 엘베':'🪜 계단'}</span>
+        <span class="dtag">📦 ${d.pkgWeightKg}kg×${d.pkgCount}</span>
+        <span class="denj">예측 ${d.predJ?d.predJ.toFixed(0)+'J':'—'}</span>
+        ${(()=>{const b=matchBuilding(d.addr);const e=b?BLDG_ENERGY[b]:null;return e?`<span class="energy-badge energy-${e.risk}">${e.risk} ${e.mean.toFixed(1)}kcal</span>`:''})()}
+        ${d.actualJ>0?`<span class="denj act">실측 ${d.actualJ.toFixed(0)}J</span>`:''}
+        ${photoTag}${restTag}${cartBadge}${intBadge}
+      </div>
+      ${cartBox}
+    </div>`;
+  };
+
+  // Render pending list with building cluster headers
+  if (pend.length) {
+    const clusters = buildingClusters(S.dels);
+    const clusterForIdx = {};
+    Object.entries(clusters).forEach(([bldg, idxs]) => {
+      idxs.forEach(i => { clusterForIdx[i] = { bldg, count: idxs.length }; });
+    });
+    let html = '', lastBldg = null;
+    pend.forEach(d => {
+      const gi = S.dels.indexOf(d);
+      const cl = clusterForIdx[gi];
+      if (cl && cl.bldg !== lastBldg) {
+        html += `<div class="bldg-header">
+          <span style="font-size:16px">🏢</span>
+          <div class="bldg-hdr-name">${cl.bldg}</div>
+          <div class="bldg-hdr-tip">📦 ${cl.count}건 동시 배송 가능</div>
+        </div>`;
+        lastBldg = cl.bldg;
+      } else if (!cl) { lastBldg = null; }
+      html += rItem(d);
+    });
+    document.getElementById('dl-pend').innerHTML = html;
+  } else {
+    document.getElementById('dl-pend').innerHTML = '<div class="empty"><div class="ei">🎉</div><p>모든 배송 완료!</p></div>';
+  }
+
+  document.getElementById('dl-done').innerHTML = done.length
+    ? done.map(rItem).join('')
+    : '<div class="empty"><div class="ei">📭</div><p>완료된 배송 없음</p></div>';
+}
+
+function swTab(t){
+  document.querySelectorAll('.tb').forEach((b,i)=>
+    b.classList.toggle('on',(i===0&&t==='p')||(i===1&&t==='d')));
+  document.getElementById('dl-pend').style.display=t==='p'?'':'none';
+  document.getElementById('dl-done').style.display=t==='d'?'':'none';
+}
+function updLWSI(){
+  const c=document.getElementById('lwsi');
+  if(S.totJ===0){c.style.display='none';return;}
+  c.style.display='';
+  const wsi=S.maxWsi, pct=Math.min((wsi/1.2)*100,100);
+  const col=wsi<0.8?'var(--green)':wsi<1.0?'var(--accent)':wsi<1.2?'var(--orange)':'var(--red)';
+  const lbl=wsi<0.8?'정상':wsi<1.0?'주의':wsi<1.2?'경고':'위험';
+  document.getElementById('lwsi-v').textContent=wsi.toFixed(2);
+  document.getElementById('lwsi-b').style.width=pct+'%';
+  document.getElementById('lwsi-b').style.background=col;
+  document.getElementById('lwsi-st').textContent=lbl;
+  document.getElementById('lwsi-st').style.background=col;
+  document.getElementById('lwsi-st').style.color='#fff';
+}
+
+// ═══════════════════════════════════════════════════════════
+//  SELECT DELIVERY
+// ═══════════════════════════════════════════════════════════
+function selDel(i){
+  const d=S.dels[i];
+  if(!d||d.status==='done') return;
+  S.aidx=i;
+  document.getElementById('m-dname').textContent=d.addr.length>20?d.addr.slice(0,20)+'…':d.addr;
+  document.getElementById('m-dfloor').textContent=`${d.floor}층 · ${d.hasElevator?'엘리베이터':'계단'} · ${d.pkgWeightKg}kg×${d.pkgCount}`;
+  document.getElementById('dp-a').textContent=d.addr;
+  document.getElementById('dp-f').textContent=`${d.floor}층`;
+  document.getElementById('dp-pred').textContent=`예측: ${d.predJ.toFixed(0)}J`;
+  document.getElementById('dp-act').textContent='실측: 0J';
+  document.getElementById('dpb').style.width='0%';
+  document.getElementById('ald').textContent=`📦 ${d.pkgWeightKg}kg×${d.pkgCount}`;
+  if(S.weather) updateHeatCards(S.weather);
+  renderList();
+  // 건물 에너지 예측 표시
+  const matchedBldg = matchBuilding(d.addr);
+  const energyInfo = matchedBldg ? BLDG_ENERGY[matchedBldg] : null;
+  const energyEl = document.getElementById('del-energy-info');
+  if (energyEl) {
+    if (energyInfo) {
+      energyEl.style.display = '';
+      energyEl.innerHTML = `<div class="bldg-energy-title">
+        <span class="energy-badge energy-${energyInfo.risk}">${energyInfo.risk}</span>
+        <b>${matchedBldg}</b> 예측 에너지
+      </div>
+      <div class="bldg-energy-row"><span>평균 소비</span><b>${energyInfo.mean.toFixed(1)} kcal</b></div>
+      <div class="bldg-energy-row"><span>P10~P90 범위</span><b>${energyInfo.p10.toFixed(1)}~${energyInfo.p90.toFixed(1)} kcal</b></div>
+      <div class="bldg-energy-row"><span>최고층 / 엘리베이터</span><b>${energyInfo.floor}층 / ${energyInfo.has_elevator?'있음':'없음'}</b></div>
+      <div style="font-size:10px;color:var(--t3);margin-top:4px">N=1,000 시뮬레이션 기반 · MET 모델</div>`;
+    } else {
+      energyEl.style.display = 'none';
+    }
+  }
+  gp('mon');
+  setTimeout(() => initMiniMap('mini-map'), 300);
+}
+
+function setBtns(running){
+  document.getElementById('btn-start').disabled = running;
+  document.getElementById('btn-stop').disabled  = !running;
+  document.getElementById('btn-photo').disabled = !running;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  MONITORING
+// ═══════════════════════════════════════════════════════════
+function attachSensor(){
+  sensorOk=false;
+  aHnd=function(e){
+    sensorOk=true;
+    let la=e.acceleration;
+    if(!la||la.x==null) la=e.accelerationIncludingGravity;
+    if(la&&la.x!=null){
+      if(lastTs!==null){const dt=e.timeStamp-lastTs;if(dt>0&&dt<500){hzSamp.push(1000/dt);if(hzSamp.length>=50){hz=hzSamp.reduce((a,b)=>a+b,0)/hzSamp.length;hzSamp=[];}}}
+      lastTs=e.timeStamp;
+      const ax=la.x||0,ay=la.y||0,az=la.z||0;
+      aX.push(ax);aY.push(ay);aZ.push(az);
+      if(aX.length>600){aX.shift();aY.shift();aZ.shift();}
+      document.getElementById('ax').textContent=ax.toFixed(2);
+      document.getElementById('ay').textContent=ay.toFixed(2);
+      document.getElementById('az').textContent=az.toFixed(2);
+    }
+    const r=e.rotationRate;
+    if(r&&r.alpha!=null){
+      const rx=(r.alpha||0)*Math.PI/180,ry=(r.beta||0)*Math.PI/180,rz=(r.gamma||0)*Math.PI/180;
+      gX.push(rx);gY.push(ry);gZ.push(rz);
+      if(gX.length>600){gX.shift();gY.shift();gZ.shift();}
+      document.getElementById('gx').textContent=rx.toFixed(3);
+      document.getElementById('gy').textContent=ry.toFixed(3);
+      document.getElementById('gz').textContent=rz.toFixed(3);
+    } else {gX.push(0);gY.push(0);gZ.push(0);if(gX.length>600){gX.shift();gY.shift();gZ.shift();}}
+    document.getElementById('ibuf').textContent=`버퍼: ${aX.length} · ~${hz.toFixed(0)}Hz`;
+  };
+  window.addEventListener('devicemotion',aHnd,true);
+  setTimeout(()=>{if(!sensorOk&&S.mon){document.getElementById('m-st').textContent='센서 오류';toast('⚠ IMU 센서 없음');}},3000);
+  infTimer=setInterval(sendInf,2000);
+  toast('모니터링 시작 ✓');
+}
+
+async function startMon(){
+  if(S.mon) return;
+  if(S.aidx===null){toast('배송지를 먼저 선택해주세요');gp('list');return;}
+  S.mon=true;
+  [aX,aY,aZ,gX,gY,gZ].forEach(a=>a.length=0);
+  hzSamp=[];lastTs=null;
+  setBtns(true);
+  document.getElementById('m-dot').style.background='var(--green)';
+  document.getElementById('m-st').textContent='LIVE';
+  document.getElementById('hdr-dot').classList.add('live');
+  document.getElementById('hdr-lbl').textContent='배송중';
+  if(typeof DeviceMotionEvent!=='undefined'&&typeof DeviceMotionEvent.requestPermission==='function'){
+    try{const p=await DeviceMotionEvent.requestPermission();
+      if(p==='granted'){attachSensor();}
+      else{toast('센서 권한 거부됨');S.mon=false;setBtns(false);document.getElementById('m-dot').style.background='var(--t3)';document.getElementById('m-st').textContent='준비중';}
+    }catch{attachSensor();}
+  } else attachSensor();
+}
+
+function stopMon(){
+  S.mon=false;
+  if(infTimer){clearInterval(infTimer);infTimer=null;}
+  if(aHnd){window.removeEventListener('devicemotion',aHnd,true);aHnd=null;}
+  setBtns(false);
+  document.getElementById('m-dot').style.background='var(--t3)';
+  document.getElementById('m-st').textContent='중지됨';
+  document.getElementById('hdr-dot').classList.remove('live');
+  document.getElementById('hdr-lbl').textContent='대기중';
+  toast('모니터링 중지');
+}
+
+function reqPerm(){
+  if(typeof DeviceMotionEvent!=='undefined'&&typeof DeviceMotionEvent.requestPermission==='function'){
+    DeviceMotionEvent.requestPermission().then(p=>{
+      if(p==='granted'){document.getElementById('perm-btn-wrap').style.display='none';toast('권한 허용됨 ✓');}
+      else toast('권한 거부됨');
+    }).catch(e=>toast('오류: '+e));
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  INFERENCE
+// ═══════════════════════════════════════════════════════════
+async function sendInf(){
+  const n=Math.min(aX.length,gX.length);
+  document.getElementById('ibuf').textContent=`버퍼: ${aX.length} · ~${hz.toFixed(0)}Hz`;
+  if(n<20){document.getElementById('ibuf').textContent+=' (버퍼링 중...)';return;}
+  const N=Math.min(n,150);
+  const d=S.aidx!==null?S.dels[S.aidx]:null;
+  const carry=d?1:0,lkg=d?d.pkgWeightKg:0,uw=S.user?.weight||72;
+  const body=JSON.stringify({acc_x:aX.slice(-N),acc_y:aY.slice(-N),acc_z:aZ.slice(-N),
+    gyro_x:gX.slice(-N),gyro_y:gY.slice(-N),gyro_z:gZ.slice(-N),
+    carrying_load:carry,courier_weight_kg:uw,load_kg:lkg,sample_hz:hz});
+  let res=null;
+  if(S.srvUrl){
+    try{
+      const r=await fetch(S.srvUrl+'/predict_fast',{method:'POST',
+        headers:{'Content-Type':'application/json','ngrok-skip-browser-warning':'true','Accept':'application/json'},
+        body,signal:AbortSignal.timeout(8000)});
+      if(r.ok){res=await r.json();updConn(true);}
+      else throw new Error('HTTP '+r.status);
+    }catch{updConn(false);res=localInf(aX.slice(-N),aY.slice(-N),aZ.slice(-N),carry,lkg,uw);}
+  } else res=localInf(aX.slice(-N),aY.slice(-N),aZ.slice(-N),carry,lkg,uw);
+  if(res) applyRes(res,d);
+}
+
+function localInf(ax,ay,az,carry,lkg,uw){
+  const mag=ax.map((x,i)=>Math.sqrt(x*x+ay[i]*ay[i]+az[i]*az[i]));
+  const mean=mag.reduce((a,b)=>a+b,0)/mag.length;
+  const std=Math.sqrt(mag.reduce((s,v)=>s+(v-mean)**2,0)/mag.length);
+  let cls=0,nm='대기/앉기',ko='대기 중',ic='🧍',dm='static',met=0.911;
+  if(std>4.5){cls=5;nm='뛰기';ko='뛰기';ic='🏃';dm='dynamic';met=8.0;}
+  else if(std>3.0&&mean>11){cls=2;nm='계단오르기';ko='계단 오르기';ic='⬆️';dm='dynamic';met=6.8;}
+  else if(std>2.5){cls=3;nm='계단내리기';ko='계단 내리기';ic='⬇️';dm='dynamic';met=3.5;}
+  else if(std>1.5){cls=4;nm='평지걷기';ko='평지 걷기';ic='🚶';dm='dynamic';met=3.2;}
+  else if(std<0.3&&mean>8){cls=1;nm='엘리베이터';ko='엘리베이터';ic='🛗';dm='static';met=0.911;}
+  const ej=calcEJ(met,uw,lkg,carry===1);
+  return{activity_class:cls,activity_name:nm,activity_korean:ko,activity_icon:ic,domain:dm,
+    met:met.toFixed(3),energy_joules:+ej.toFixed(2),energy_kcal:+(ej/4184).toFixed(5)};
+}
+
+const ACLR={0:'#F3F4F6',1:'#DBEAFE',2:'#FEF3C7',3:'#FEFCE8',4:'#D1FAE5',5:'#FEE2E2',6:'#EDE9FE'};
+
+function applyRes(r,d){
+  S.shiftSec+=5;
+  S.continuousWorkMin+=5/60;
+  S.continuousMetMin+=(+r.met)*(5/60);
+  S.lastActivity=r;
+  if(S.weather) updateHeatCards(S.weather);
+
+  // Update work progress bar
+  const nxt = S.restSchedule[0];
+  if (nxt) {
+    const thr = REST_THRESHOLDS[nxt.intensity] || REST_THRESHOLDS.moderate;
+    const pct = Math.min((S.continuousWorkMin/thr.softMin)*100,100);
+    const col = pct<60?'var(--green)':pct<85?'var(--accent)':'var(--red)';
+    document.getElementById('work-prog').style.width=pct+'%';
+    document.getElementById('work-prog').style.background=col;
+    document.getElementById('heat-card').style.display='';
+  }
+  document.getElementById('work-min').textContent=S.continuousWorkMin.toFixed(0);
+  document.getElementById('met-min').textContent=S.continuousMetMin.toFixed(0);
+
+  const ej=+r.energy_joules,ekc=+r.energy_kcal;
+  S.totJ+=ej;S.totKc+=ekc;
+  if(d) d.actualJ+=ej;
+  document.getElementById('aiwrap').style.background=ACLR[r.activity_class]||'#F3F4F6';
+  document.getElementById('aico').textContent=r.activity_icon;
+  document.getElementById('aname').textContent=r.activity_name;
+  document.getElementById('ako').textContent=r.activity_korean;
+  document.getElementById('adom').textContent=r.domain==='static'?'정적':'동적';
+  document.getElementById('amet').textContent=`MET ${(+r.met).toFixed(2)}`;
+  document.getElementById('we').textContent=ej.toFixed(1);
+  document.getElementById('wkc').textContent=ekc.toFixed(5)+' kcal';
+  document.getElementById('te').textContent=S.totJ.toFixed(0);
+  document.getElementById('tkc').textContent=S.totKc.toFixed(3)+' kcal';
+  const el=calcElimit(S.user?.weight||72,S.user?.height||175,S.shiftSec);
+  const wsi=el>0?S.totJ/el:0;
+  if(wsi>S.maxWsi) S.maxWsi=wsi;
+  updWSI(wsi);
+
+  // Live formula breakdown display
+  const uw2 = S.user?.weight||72, uh2 = S.user?.height||175;
+  const bsa = 0.007184 * Math.pow(uw2,0.425) * Math.pow(uh2,0.725);
+  const lkg2 = d ? d.pkgWeightKg * d.pkgCount : 0;
+  const cl2  = lkg2 > 0 ? 1 + (0.5 * lkg2 / uw2) : 1.0;
+  const fmEtot = document.getElementById('fm-etot');
+  const fmElim = document.getElementById('fm-elim');
+  const fmBsa  = document.getElementById('fm-bsa');
+  const fmCl   = document.getElementById('fm-cload');
+  if(fmEtot) fmEtot.textContent = S.totJ.toFixed(0)+' J';
+  if(fmElim) fmElim.textContent = el.toFixed(0)+' J';
+  if(fmBsa)  fmBsa.textContent  = bsa.toFixed(4)+' m²';
+  if(fmCl)   fmCl.textContent   = cl2.toFixed(3)+(lkg2>0?` (${lkg2}kg)`:' (무하중)');
+
+  if(d&&d.predJ>0){
+    document.getElementById('dpb').style.width=Math.min((d.actualJ/d.predJ)*100,100)+'%';
+    document.getElementById('dp-act').textContent=`실측: ${d.actualJ.toFixed(0)}J`;
+  }
+  document.getElementById('s-kc').textContent=S.totKc.toFixed(1);
+  updLWSI(); updSettings();
+}
+
+function updWSI(wsi){
+  const pct=Math.min((wsi/1.2)*100,100);
+  document.getElementById('wv').textContent=wsi.toFixed(2);
+  document.getElementById('wb').style.width=pct+'%';
+  let col,lbl,bg,tc,ah='';
+  if(wsi<0.8){col='var(--green)';lbl='정상';bg='var(--green-bg)';tc='#065F46';}
+  else if(wsi<1.0){col='var(--accent)';lbl='주의';bg='var(--acc2)';tc='#92400E';
+    ah='<div class="alrt caut"><span>⚠️</span>작업 강도 증가 — 수분 보충 권장</div>';}
+  else if(wsi<1.2){col='var(--orange)';lbl='경고';bg='var(--orange-bg)';tc='#9A3412';
+    ah='<div class="alrt warn"><span>🔔</span>과도한 작업부하 — 속도를 줄이세요</div>';}
+  else{col='var(--red)';lbl='위험';bg='var(--red-bg)';tc='#991B1B';
+    ah='<div class="alrt dngr"><span>🚨</span>위험 수준 — 즉시 휴식</div>';}
+  document.getElementById('wb').style.background=col;
+  document.getElementById('wst').textContent=lbl;
+  document.getElementById('wst').style.background=bg;
+  document.getElementById('wst').style.color=tc;
+  const ab=document.getElementById('alrt-box');
+  ab.style.display=ah?'':'none';ab.innerHTML=ah;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  SETTINGS
+// ═══════════════════════════════════════════════════════════
+function saveSrv(){
+  const u=document.getElementById('srv-url').value.trim().replace(/\/$/,'');
+  S.srvUrl=u;localStorage.setItem('srv',u);testSrv(u);toast('서버 URL 저장됨');
+}
+async function testSrv(u){
+  try{const r=await fetch(u+'/health',{headers:{'ngrok-skip-browser-warning':'true'},signal:AbortSignal.timeout(5000)});
+    if(r.ok){updConn(true);toast('서버 연결 성공 ✓');}else throw 0;
+  }catch{updConn(false);}
+}
+function updConn(ok){
+  document.getElementById('conn-chip').innerHTML=ok
+    ?'<span class="cchip ok"><span class="cd"></span>연결됨</span>'
+    :'<span class="cchip err"><span class="cd"></span>연결 실패</span>';
+}
+function updSettings(){
+  const dn=S.dels.filter(d=>d.status==='done').length;
+  document.getElementById('sum-tot').textContent=S.dels.length+'건';
+  document.getElementById('sum-dn').textContent=dn+'건';
+  document.getElementById('sum-ej').textContent=S.totJ.toFixed(0)+' J';
+  document.getElementById('sum-kc').textContent=S.totKc.toFixed(3)+' kcal';
+  document.getElementById('sum-kg').textContent=S.totalCarriedKg.toFixed(0)+' kg';
+  document.getElementById('sum-wsi').textContent=S.maxWsi.toFixed(2);
+  document.getElementById('sum-cwm').textContent=S.continuousWorkMin.toFixed(0)+'분';
+  document.getElementById('sum-water').textContent=S.hydrationCups+'컵';
+  updSanjiLogViewer();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  CALENDAR
+// ═══════════════════════════════════════════════════════════
+function getLog(){try{return JSON.parse(localStorage.getItem('wl_log')||'[]');}catch{return[];}}
+function setLog(l){localStorage.setItem('wl_log',JSON.stringify(l));}
+function todayStr(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+
+function saveToday(){
+  if(!S.user){toast('로그인 후 저장 가능');return;}
+  if(S.totJ===0){toast('오늘 기록이 없습니다');return;}
+  const log=getLog(),today=todayStr();
+  const rec={date:today,worker:S.user.name,dels:S.dels.filter(d=>d.status==='done').length,
+    totJ:+S.totJ.toFixed(0),totKc:+S.totKc.toFixed(3),maxWsi:+S.maxWsi.toFixed(3),shiftSec:S.shiftSec,
+    deliveries:S.dels.map(d=>({addr:d.addr,floor:d.floor,predJ:d.predJ,actualJ:+d.actualJ.toFixed(0),status:d.status,photoTaken:!!d.photoTaken}))};
+  const idx=log.findIndex(r=>r.date===today);
+  if(idx>=0) log[idx]=rec; else log.unshift(rec);
+  setLog(log);toast('오늘 기록 저장 ✓');renderCal();
+}
+
+let calY=new Date().getFullYear(),calM=new Date().getMonth(),calSel=null;
+const MO_KO=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+const DOW_KO=['월','화','수','목','금','토','일'];
+function calNav(dir){calM+=dir;if(calM>11){calM=0;calY++;}else if(calM<0){calM=11;calY--;}renderCal();}
+function renderCal(){
+  document.getElementById('cal-lbl').textContent=`${calY}년 ${MO_KO[calM]}`;
+  const log=getLog(),logMap={},today=todayStr();
+  log.forEach(r=>logMap[r.date]=r);
+  const dim=new Date(calY,calM+1,0).getDate();
+  const off=(new Date(calY,calM,1).getDay()+6)%7;
+  let html='<div class="cal-dow">'+DOW_KO.map(d=>`<div class="cal-dow-lbl">${d}</div>`).join('')+'</div><div class="cal-days">';
+  for(let i=0;i<off;i++) html+=`<div class="cal-day empty"></div>`;
+  for(let day=1;day<=dim;day++){
+    const ds=`${calY}-${String(calM+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const rec=logMap[ds];
+    let cls='cal-day';
+    if(rec){cls+=' has-data';if(rec.maxWsi>=1.2)cls+=' wsi-dngr';else if(rec.maxWsi>=0.8)cls+=' wsi-warn';}
+    if(ds===today)cls+=' today';if(ds===calSel)cls+=' sel';
+    html+=`<div class="${cls}" onclick="calSel='${ds}';renderCal()">${day}${rec?'<div class="cal-dot"></div>':''}</div>`;
+  }
+  html+='</div>';
+  document.getElementById('cal-grid').innerHTML=html;
+  if(calSel&&logMap[calSel])showCalDetail(logMap[calSel]);
+  else if(calSel){document.getElementById('cal-detail').style.display='none';document.getElementById('cal-empty').style.display='block';}
+  else{document.getElementById('cal-detail').style.display='none';document.getElementById('cal-empty').style.display='none';}
+}
+function showCalDetail(rec){
+  document.getElementById('cal-empty').style.display='none';
+  document.getElementById('cal-detail').style.display='block';
+  const[y,m,d]=rec.date.split('-');
+  document.getElementById('cd-date').textContent=`${y}년 ${parseInt(m)}월 ${parseInt(d)}일 · ${rec.worker||'—'}`;
+  document.getElementById('cd-dels').textContent=rec.dels+'건';
+  document.getElementById('cd-ej').textContent=rec.totJ.toLocaleString()+' J';
+  document.getElementById('cd-kc').textContent=rec.totKc.toFixed(3)+' kcal';
+  document.getElementById('cd-wsi').textContent=rec.maxWsi.toFixed(3);
+  const ss=rec.shiftSec||0;
+  document.getElementById('cd-time').textContent=ss>=3600?`${Math.floor(ss/3600)}시간 ${Math.floor((ss%3600)/60)}분`:`${Math.floor(ss/60)}분`;
+  const wsiLbl=rec.maxWsi>=1.2?'🚨 위험':rec.maxWsi>=1.0?'🔔 경고':rec.maxWsi>=0.8?'⚠️ 주의':'✅ 정상';
+  document.getElementById('cd-st').textContent=wsiLbl;
+  document.getElementById('cd-st').style.color=rec.maxWsi>=1.2?'var(--red)':rec.maxWsi>=1.0?'var(--orange)':rec.maxWsi>=0.8?'var(--accent)':'var(--green)';
+  if(rec.deliveries?.length){
+    document.getElementById('cd-dlist-card').style.display='block';
+    document.getElementById('cd-dlist').innerHTML=rec.deliveries.map(d=>`
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+        <div><div style="font-size:12px;font-weight:600">${d.addr} ${d.photoTaken?'📸':''}</div><div style="font-size:11px;color:var(--t3)">${d.floor}층</div></div>
+        <div style="text-align:right">
+          <div style="font-size:11px;color:var(--t3)">예측 ${d.predJ}J</div>
+          <div style="font-size:12px;font-weight:700;color:${d.status==='done'?'var(--blue)':'var(--t3)'}">${d.status==='done'?'실측 '+d.actualJ+'J':'미완료'}</div>
+        </div>
+      </div>`).join('');
+  } else document.getElementById('cd-dlist-card').style.display='none';
+}
+
+
+// ═══════════════════════════════════════════════════════════
+//  에너지맵 (전체 탭)
+// ═══════════════════════════════════════════════════════════
+const BLDG_COORDS_ALL = {
+  "백년관":       {lat:37.337236,lng:127.26545},
+  "어문학관":     {lat:37.338479,lng:127.273794},
+  "공학관":       {lat:37.33744, lng:127.267847},
+  "기숙사_B동":   {lat:37.335117,lng:127.262659},
+  "기숙사_C동":   {lat:37.335182,lng:127.263706},
+  "기숙사_A동":   {lat:37.334441,lng:127.262748},
+  "기숙사_D동":   {lat:37.333677,lng:127.262637},
+  "기숙사_E동":   {lat:37.333157,lng:127.26148},
+  "자연과학관":   {lat:37.338867,lng:127.266142},
+  "인문경상관":   {lat:37.339697,lng:127.274539},
+  "학생회관":     {lat:37.337121,lng:127.269742},
+  "창업보육센터": {lat:37.339032,lng:127.267366},
+  "교양관":       {lat:37.339732,lng:127.272074},
+  "후생복지관":   {lat:37.337731,lng:127.268637},
+};
+
+let energyMap=null, energyHeatCircles=[], energyBubbles=[], energyShowHeat=true;
+let courierPosMarker=null;
+
+function initEnergyMap() {
+  if (energyMap) { energyMap.autoResize(); return; }
+  energyMap = new naver.maps.Map('energy-map', {
+    center: new naver.maps.LatLng(37.337000, 127.267000),
+    zoom: 15, mapTypeId: naver.maps.MapTypeId.NORMAL
+  });
+
+  const maxKcal = Math.max(...Object.values(BLDG_ENERGY).map(e=>e.mean));
+
+  // 히트 원형
+  Object.entries(BLDG_COORDS_ALL).forEach(([name, coord]) => {
+    const en = BLDG_ENERGY[name]; if (!en) return;
+    const op = 0.10+(en.mean/maxKcal)*0.32;
+    const r  = 120+(en.mean/maxKcal)*200;
+    const col= en.risk==='HIGH'?'#ef4444':en.risk==='MEDIUM'?'#f97316':'#10b981';
+    [r, r*0.45].forEach(radius => {
+      const c = new naver.maps.Circle({map:energyMap,center:new naver.maps.LatLng(coord.lat,coord.lng),radius,fillColor:col,fillOpacity:op,strokeWeight:0});
+      energyHeatCircles.push(c);
+    });
+  });
+
+  // 건물 버블 마커
+  Object.entries(BLDG_COORDS_ALL).forEach(([name, coord]) => {
+    const en = BLDG_ENERGY[name]; if (!en) return;
+    const col = en.risk==='HIGH'?'#ef4444':en.risk==='MEDIUM'?'#f97316':'#10b981';
+    // 내 배송 건물인지 확인
+    const myDel = S.dels?.find(d => matchBuilding(d.addr) === name && d.status !== 'done');
+    const isMyDel = !!myDel;
+    const html = `<div style="display:flex;flex-direction:column;align-items:center;transform:translate(-50%,-100%);cursor:pointer">
+      <div style="background:#fff;border:2px solid ${col};border-radius:8px;padding:4px 9px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.15);position:relative${isMyDel?';border-width:3px;box-shadow:0 0 0 3px '+col+'44':''}">
+        <div style="font-size:9px;font-weight:700;color:#555;margin-bottom:1px">${name}${isMyDel?' 📦':''}</div>
+        <div style="font-size:11px;font-weight:700;color:#111;font-family:monospace">${en.p10.toFixed(1)}~${en.p90.toFixed(1)}<span style="color:#888;font-size:9px"> kcal</span></div>
+        <div style="position:absolute;bottom:-7px;left:50%;transform:translateX(-50%);border:4px solid transparent;border-top-color:${col}"></div>
+      </div>
+      <div style="width:7px;height:7px;border-radius:50%;background:${col};margin-top:2px"></div>
+    </div>`;
+    const m = new naver.maps.Marker({
+      position: new naver.maps.LatLng(coord.lat, coord.lng),
+      map: energyMap,
+      icon: {content: html, anchor: new naver.maps.Point(60, 48)}
+    });
+    naver.maps.Event.addListener(m, 'click', () => openMapDetailSheet(name, en, myDel));
+    energyBubbles.push(m);
+  });
+
+  // 내 배송 수 표시
+  updMyDelCount();
+
+  // GPS 마커
+  if (GPS.lat) addCourierMarker();
+}
+
+function addCourierMarker() {
+  if (!energyMap) return;
+  const pos = new naver.maps.LatLng(GPS.lat, GPS.lng);
+  if (!courierPosMarker) {
+    courierPosMarker = new naver.maps.Marker({
+      position: pos, map: energyMap,
+      icon: {
+        content: '<div style="width:16px;height:16px;background:#2563EB;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 4px rgba(37,99,235,.3);"></div>',
+        anchor: new naver.maps.Point(8, 8)
+      }
+    });
+  } else {
+    courierPosMarker.setPosition(pos);
+    courierPosMarker.setMap(energyMap);
+  }
+  // GPS 칩 업데이트
+  const chip = document.getElementById('map-gps-chip');
+  if (chip) { chip.className='gps-chip active'; chip.textContent=`±${GPS.accuracy||'?'}m`; }
+}
+
+function openMapDetailSheet(name, en, myDel) {
+  const col = en.risk==='HIGH'?'#ef4444':en.risk==='MEDIUM'?'#f97316':'#10b981';
+  document.getElementById('mds-name').textContent = name;
+  document.getElementById('mds-risk').textContent = en.risk;
+  document.getElementById('mds-risk').className = `energy-badge energy-${en.risk}`;
+  document.getElementById('mds-mean').textContent = en.mean.toFixed(1)+' kcal';
+  document.getElementById('mds-range').textContent = `${en.p10.toFixed(1)} ~ ${en.p90.toFixed(1)}`;
+  document.getElementById('mds-floor').textContent = `${en.floor}층`;
+  document.getElementById('mds-elev').textContent = en.has_elevator ? '🛗 엘리베이터' : '🪜 계단';
+  const myEl = document.getElementById('mds-my-del');
+  if (myDel) { myEl.style.display=''; myEl.textContent=`📦 내 배송 있음`; }
+  else myEl.style.display='none';
+  document.getElementById('map-detail-sheet').style.display = '';
+  // 지도 이동
+  const coord = BLDG_COORDS_ALL[name];
+  if (coord && energyMap) energyMap.setCenter(new naver.maps.LatLng(coord.lat, coord.lng));
+}
+
+function updMyDelCount() {
+  if (!S.dels) return;
+  const cnt = S.dels.filter(d => matchBuilding(d.addr) && d.status !== 'done').length;
+  const el = document.getElementById('my-del-count');
+  if (el) el.textContent = cnt;
+}
+
+function toggleMapHeat() {
+  energyShowHeat = !energyShowHeat;
+  energyHeatCircles.forEach(c => c.setMap(energyShowHeat ? energyMap : null));
+  const btn = document.getElementById('map-heat-btn');
+  if (btn) { btn.style.background = energyShowHeat ? 'var(--accent)' : 'var(--bg)'; btn.style.color = energyShowHeat ? '#fff' : 'var(--t2)'; }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  NAV
+// ═══════════════════════════════════════════════════════════
+const PGMAP={login:'pg-login',list:'pg-list',mon:'pg-mon',map:'pg-map',cal:'pg-cal',set:'pg-set'};
+function gp(n){
+  Object.values(PGMAP).forEach(id=>{
+    const el=document.getElementById(id);
+    const on=id===PGMAP[n];
+    el.classList.toggle('active',on);
+    el.style.display=on?'flex':'none';
+  });
+  document.querySelectorAll('.ni').forEach(btn=>{
+    const lbl=btn.querySelector('.nlbl')?.textContent;
+    const map={'배송목록':'list','기록':'cal','설정':'set'};
+    btn.classList.toggle('on',map[lbl]===n);
+  });
+  if(n==='cal') renderCal();
+  if(n==='map'){setTimeout(()=>{initEnergyMap();if(GPS.lat)addCourierMarker();updMyDelCount();},200);}
+}
+function toast(m){
+  const t=document.getElementById('toast');
+  t.textContent=m;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded',()=>{
+  Object.values(PGMAP).forEach(id=>document.getElementById(id).style.display='none');
+  document.getElementById('pg-login').style.display='flex';
+  if(S.srvUrl) document.getElementById('srv-url').value=S.srvUrl;
+  const k=localStorage.getItem('owm_key')||'';
+  const sc=localStorage.getItem('sun_cond')||'full_sun';
+  if(k) document.getElementById('owm-key').value=k;
+  document.getElementById('sun-cond').value=sc;
+  if(typeof DeviceMotionEvent!=='undefined'&&typeof DeviceMotionEvent.requestPermission==='function')
+    document.getElementById('perm-btn-wrap').style.display='block';
+  setBtns(false);
+});
+</script>
+</body>
+</html>
