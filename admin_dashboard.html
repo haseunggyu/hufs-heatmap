@@ -225,20 +225,20 @@ function simulateTick(){drivers=drivers.map(d=>{if(d.status!=="배송중")return
 
 /* ═══════════ HEATMAP ═══════════ */
 const HMAP_DATA=[
-  {building:"백년관",lat:37.337236,lng:127.26545,mean_kcal:43.26,p10_kcal:35.65,p90_kcal:51.29,risk:"HIGH",delivery_mode:"floor_delivery",max_floor:11,has_elevator:true,storage_floor:null},
-  {building:"어문학관",lat:37.338479,lng:127.273794,mean_kcal:41.50,p10_kcal:27.79,p90_kcal:56.17,risk:"HIGH",delivery_mode:"floor_delivery",max_floor:5,has_elevator:false,storage_floor:null},
-  {building:"공학관",lat:37.33744,lng:127.267847,mean_kcal:31.40,p10_kcal:15.46,p90_kcal:46.49,risk:"HIGH",delivery_mode:"mixed",max_floor:5,has_elevator:false,storage_floor:2},
-  {building:"기숙사_B동",lat:37.335117,lng:127.262659,mean_kcal:19.18,p10_kcal:15.62,p90_kcal:22.92,risk:"MEDIUM",delivery_mode:"storage",max_floor:8,has_elevator:true,storage_floor:1},
-  {building:"기숙사_C동",lat:37.335182,lng:127.263706,mean_kcal:19.13,p10_kcal:15.31,p90_kcal:23.05,risk:"MEDIUM",delivery_mode:"storage",max_floor:8,has_elevator:true,storage_floor:1},
-  {building:"기숙사_A동",lat:37.334441,lng:127.262748,mean_kcal:19.12,p10_kcal:15.48,p90_kcal:23.01,risk:"MEDIUM",delivery_mode:"storage",max_floor:8,has_elevator:true,storage_floor:1},
-  {building:"기숙사_D동",lat:37.333677,lng:127.262637,mean_kcal:19.07,p10_kcal:15.40,p90_kcal:23.01,risk:"MEDIUM",delivery_mode:"storage",max_floor:4,has_elevator:false,storage_floor:1},
-  {building:"기숙사_E동",lat:37.333157,lng:127.26148,mean_kcal:18.96,p10_kcal:15.19,p90_kcal:22.92,risk:"MEDIUM",delivery_mode:"storage",max_floor:4,has_elevator:false,storage_floor:1},
-  {building:"자연과학관",lat:37.338867,lng:127.266142,mean_kcal:13.63,p10_kcal:9.56,p90_kcal:17.90,risk:"MEDIUM",delivery_mode:"floor_delivery",max_floor:5,has_elevator:true,storage_floor:null},
-  {building:"인문경상관",lat:37.339697,lng:127.274539,mean_kcal:4.97,p10_kcal:2.64,p90_kcal:6.93,risk:"LOW",delivery_mode:"storage",max_floor:4,has_elevator:false,storage_floor:1},
-  {building:"학생회관",lat:37.337121,lng:127.269742,mean_kcal:4.94,p10_kcal:2.69,p90_kcal:6.80,risk:"LOW",delivery_mode:"storage",max_floor:4,has_elevator:false,storage_floor:1},
-  {building:"창업보육센터",lat:37.339032,lng:127.267366,mean_kcal:4.93,p10_kcal:3.54,p90_kcal:6.80,risk:"LOW",delivery_mode:"storage",max_floor:4,has_elevator:false,storage_floor:1},
-  {building:"교양관",lat:37.339732,lng:127.272074,mean_kcal:4.86,p10_kcal:2.55,p90_kcal:6.79,risk:"LOW",delivery_mode:"storage",max_floor:5,has_elevator:true,storage_floor:1},
-  {building:"후생복지관",lat:37.337731,lng:127.268637,mean_kcal:4.84,p10_kcal:2.48,p90_kcal:6.73,risk:"LOW",delivery_mode:"storage",max_floor:4,has_elevator:false,storage_floor:1}
+  {building:"백년관",lat:37.337236,lng:127.26545,mean_kcal:33.3,p10_kcal:27.86,p90_kcal:38.84,risk:"HIGH",delivery_mode:"floor_delivery",max_floor:11,has_elevator:true,storage_floor:null},
+  {building:"어문학관",lat:37.338479,lng:127.273794,mean_kcal:44.56,p10_kcal:29.9,p90_kcal:61.13,risk:"HIGH",delivery_mode:"floor_delivery",max_floor:5,has_elevator:false,storage_floor:null},
+  {building:"공학관",lat:37.33744,lng:127.267847,mean_kcal:32.79,p10_kcal:15.59,p90_kcal:49.37,risk:"HIGH",delivery_mode:"mixed",max_floor:5,has_elevator:false,storage_floor:2},
+  {building:"기숙사_B동",lat:37.335117,lng:127.262659,mean_kcal:10.91,p10_kcal:9.19,p90_kcal:12.95,risk:"MEDIUM",delivery_mode:"storage",max_floor:8,has_elevator:true,storage_floor:1},
+  {building:"기숙사_C동",lat:37.335182,lng:127.263706,mean_kcal:10.98,p10_kcal:9.27,p90_kcal:12.92,risk:"MEDIUM",delivery_mode:"storage",max_floor:8,has_elevator:true,storage_floor:1},
+  {building:"기숙사_A동",lat:37.334441,lng:127.262748,mean_kcal:10.96,p10_kcal:9.29,p90_kcal:12.87,risk:"MEDIUM",delivery_mode:"storage",max_floor:8,has_elevator:true,storage_floor:1},
+  {building:"기숙사_D동",lat:37.333677,lng:127.262637,mean_kcal:10.94,p10_kcal:9.14,p90_kcal:12.98,risk:"MEDIUM",delivery_mode:"storage",max_floor:4,has_elevator:false,storage_floor:1},
+  {building:"기숙사_E동",lat:37.333157,lng:127.26148,mean_kcal:10.97,p10_kcal:9.39,p90_kcal:12.99,risk:"MEDIUM",delivery_mode:"storage",max_floor:4,has_elevator:false,storage_floor:1},
+  {building:"자연과학관",lat:37.338867,lng:127.266142,mean_kcal:11.13,p10_kcal:7.62,p90_kcal:14.2,risk:"MEDIUM",delivery_mode:"floor_delivery",max_floor:5,has_elevator:true,storage_floor:null},
+  {building:"인문경상관",lat:37.339697,lng:127.274539,mean_kcal:3.07,p10_kcal:2.0,p90_kcal:4.16,risk:"LOW",delivery_mode:"storage",max_floor:4,has_elevator:false,storage_floor:1},
+  {building:"학생회관",lat:37.337121,lng:127.269742,mean_kcal:3.06,p10_kcal:2.01,p90_kcal:4.13,risk:"LOW",delivery_mode:"storage",max_floor:4,has_elevator:false,storage_floor:1},
+  {building:"창업보육센터",lat:37.339032,lng:127.267366,mean_kcal:3.06,p10_kcal:2.02,p90_kcal:4.15,risk:"LOW",delivery_mode:"storage",max_floor:4,has_elevator:false,storage_floor:1},
+  {building:"교양관",lat:37.339732,lng:127.272074,mean_kcal:3.04,p10_kcal:2.0,p90_kcal:4.14,risk:"LOW",delivery_mode:"storage",max_floor:5,has_elevator:true,storage_floor:1},
+  {building:"후생복지관",lat:37.337731,lng:127.268637,mean_kcal:3.02,p10_kcal:1.99,p90_kcal:4.09,risk:"LOW",delivery_mode:"storage",max_floor:4,has_elevator:false,storage_floor:1}
 ];
 const MODE_KR={storage:"보관소 집중",floor_delivery:"층별 직접배송",mixed:"혼합"};
 const RISK_COLOR={HIGH:"#ef4444",MEDIUM:"#f97316",LOW:"#10b981"};
@@ -267,8 +267,46 @@ function initHmap(){
     naver.maps.Event.addListener(m,'click',()=>openHmapDetail(d,i));
     bubbleMarkers.push(m);
   });
-  setTimeout(()=>hmapInstance.autoResize(),300);
+  setTimeout(()=>{hmapInstance.autoResize();renderCourierGPS();},300);
   renderHmapRank();
+}
+
+
+// ═══════════════════════════════════════════════════════════
+//  배송원 GPS 마커 (서버 연동 또는 데모)
+// ═══════════════════════════════════════════════════════════
+const COURIER_DEMO_GPS = [
+  {id:"CJ-28471",name:"김민준",lat:37.337519,lng:127.268062,wsi:0.91,activity:"계단 오르기",delivery:"공학관 304호"},
+  {id:"CJ-19382",name:"박서준", lat:37.339732,lng:127.272074,wsi:0.62,activity:"평지 걷기",  delivery:"교양관 202호"},
+  {id:"CJ-38291",name:"이도윤", lat:37.334441,lng:127.262748,wsi:1.08,activity:"계단 오르기",delivery:"기숙사_A동 105호"},
+  {id:"CJ-74820",name:"최하준", lat:37.337236,lng:127.26545, wsi:1.24,activity:"엘리베이터", delivery:"백년관 501호"},
+];
+
+let courierMarkers = [];
+
+function renderCourierGPS() {
+  if (!hmapInstance) return;
+  courierMarkers.forEach(m => m.setMap(null));
+  courierMarkers = [];
+  COURIER_DEMO_GPS.forEach(c => {
+    const col = c.wsi>=1.2?'#ef4444':c.wsi>=1.0?'#f97316':c.wsi>=0.8?'#f59e0b':'#10b981';
+    const html = `<div style="display:flex;flex-direction:column;align-items:center;transform:translate(-50%,-100%);cursor:pointer">
+      <div style="background:${col};color:#fff;border-radius:20px;padding:4px 10px;font-size:10px;font-weight:700;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.2)">
+        🚚 ${c.name} <span style="opacity:.8">WSI ${c.wsi.toFixed(2)}</span>
+      </div>
+      <div style="width:8px;height:8px;border-radius:50%;background:${col};margin-top:2px;box-shadow:0 0 0 3px ${col}33"></div>
+    </div>`;
+    const m = new naver.maps.Marker({
+      position: new naver.maps.LatLng(c.lat, c.lng),
+      map: hmapInstance,
+      icon: {content: html, anchor: new naver.maps.Point(60, 40)}
+    });
+    naver.maps.Event.addListener(m, 'click', () => {
+      const d = drivers.find(x => x.id === c.id);
+      if (d) { selectDriver(c.id); showPanel('overview'); }
+    });
+    courierMarkers.push(m);
+  });
 }
 
 function renderHmapRank(){
@@ -306,6 +344,12 @@ function openHmapDetail(d,i){
   document.querySelectorAll('.hmap-rank-item').forEach((el,idx)=>el.classList.toggle('active',idx===i));
 }
 function closeHmapDetail(){document.getElementById('hmapDetail').style.display='none';document.querySelectorAll('.hmap-rank-item').forEach(el=>el.classList.remove('active'));}
+function toggleCourierGPS(){
+  const btn=document.getElementById('btn-gps');
+  const showing=btn.classList.toggle('on');
+  if(showing){renderCourierGPS();}
+  else{courierMarkers.forEach(m=>m.setMap(null));courierMarkers=[];}
+}
 function toggleHeat(){showHeat=!showHeat;heatLayer.forEach(c=>c.setMap(showHeat?hmapInstance:null));document.getElementById('btn-heat').classList.toggle('on',showHeat);}
 function toggleBubble(){showBubble=!showBubble;bubbleMarkers.forEach(m=>m.setMap(showBubble?hmapInstance:null));document.getElementById('btn-bubble').classList.toggle('on',showBubble);}
 

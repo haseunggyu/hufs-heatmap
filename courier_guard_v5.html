@@ -35,6 +35,71 @@
 /* 미니맵 */
 #mini-map{width:100%;height:200px;border-radius:var(--r);overflow:hidden;border:1px solid var(--border)}
 .map-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh)}
+
+/* ── 모바일 세로 모드 최적화 ── */
+@media (max-width:480px){
+  /* 기본 패딩 축소 */
+  .body{padding:12px;gap:10px}
+  .card{padding:12px}
+  /* 헤더 축소 */
+  .hdr{padding:10px 14px}
+  .logo-txt{font-size:15px}
+  /* 에너지 그리드: 세로로 변경 */
+  .egrid{grid-template-columns:1fr 1fr;gap:8px}
+  .ebox .ev{font-size:20px}
+  /* IMU 센서 레이아웃 */
+  .imu-g{grid-template-columns:1fr 1fr;gap:8px}
+  /* WSI 바 */
+  .wsiv{font-size:22px}
+  /* 버튼 */
+  .brow{gap:7px}
+  .bcomp,.bsec,.bphoto{padding:10px;font-size:12px}
+  /* 배송 목록 */
+  .di{padding:10px 12px}
+  .diaddr{font-size:12px}
+  /* 배지 줄바꿈 허용 */
+  .di-bot{flex-wrap:wrap;gap:4px}
+  /* 로그인 */
+  .fr{grid-template-columns:1fr 1fr}
+  /* 에너지맵 페이지 */
+  #energy-map{min-height:0;flex:1}
+  /* 바텀시트 */
+  #map-detail-sheet{padding:12px 14px 16px}
+  /* 미니맵 높이 축소 */
+  #mini-map{height:160px}
+  /* 인사 카드 */
+  .gc{padding:14px}
+  .gc h2{font-size:16px}
+  .gss .v{font-size:15px}
+  /* 히드레이션 */
+  .hydro-cup{font-size:17px}
+  /* 탭 */
+  .tb{font-size:11px;padding:7px 3px}
+  /* 네비 */
+  .nico{font-size:17px}
+  .nlbl{font-size:9px}
+  /* 배송 모니터링 페이지 스크롤 개선 */
+  #pg-mon .body{padding-bottom:80px}
+  /* 캘린더 */
+  .cal-day{font-size:11px;border-radius:6px}
+  /* 설정 */
+  .srow{padding:6px 0}
+  .sk{font-size:11px}
+  .sv{font-size:12px}
+  /* 토스트 */
+  .toast{font-size:11px;padding:8px 14px;bottom:65px}
+  /* WSI 공식 상세 숨김 (화면 공간 절약) */
+  #pg-mon .body > div:has(#fm-etot){display:none}
+}
+
+/* 세로 모드에서 에너지맵 탭 최적화 */
+@media (max-width:480px) and (orientation:portrait){
+  #pg-map{display:flex;flex-direction:column}
+  #energy-map{flex:1;min-height:200px}
+  #map-detail-sheet{max-height:45vh;overflow-y:auto}
+  /* 요약 칩 스크롤 */
+  #pg-map > div:nth-child(2){overflow-x:auto;-webkit-overflow-scrolling:touch}
+}
 html,body{height:100%;background:var(--bg);font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;color:var(--t1);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
 .page{display:none;min-height:100vh;flex-direction:column}
 .page.active{display:flex}
@@ -601,8 +666,8 @@ button:disabled{opacity:.35!important;cursor:not-allowed!important;pointer-event
 
 
 <!-- 에너지맵 페이지 -->
-<div id="pg-map" class="page">
-  <div class="hdr">
+<div id="pg-map" class="page" style="display:none;flex-direction:column;height:100vh;overflow:hidden">
+  <div class="hdr" style="flex-shrink:0">
     <div class="hdr-logo">
       <div class="logo-mk" style="background:#10b981">🗺️</div>
       <div><div class="logo-txt">에너지맵</div><div class="logo-sub">건물별 배송 에너지 예측</div></div>
@@ -613,7 +678,7 @@ button:disabled{opacity:.35!important;cursor:not-allowed!important;pointer-event
     </div>
   </div>
   <!-- 요약 칩 -->
-  <div style="display:flex;gap:8px;padding:10px 14px;background:var(--surface);border-bottom:1px solid var(--border);overflow-x:auto">
+  <div style="display:flex;gap:8px;padding:10px 14px;background:var(--surface);border-bottom:1px solid var(--border);overflow-x:auto;flex-shrink:0;-webkit-overflow-scrolling:touch">
     <div style="flex-shrink:0;background:var(--red-bg);border-radius:8px;padding:6px 10px;text-align:center">
       <div style="font-size:14px;font-weight:800;color:var(--red)">3</div>
       <div style="font-size:9px;color:var(--t2)">HIGH</div>
@@ -636,12 +701,13 @@ button:disabled{opacity:.35!important;cursor:not-allowed!important;pointer-event
     </div>
   </div>
   <!-- 지도 -->
-  <div id="energy-map" style="flex:1;min-height:0"></div>
+  <div id="energy-map" style="flex:1;min-height:0;position:relative"></div>
   <!-- 바텀시트: 건물 상세 -->
-  <div id="map-detail-sheet" style="display:none;background:var(--surface);border-top:1px solid var(--border);border-radius:16px 16px 0 0;padding:14px 16px 20px;box-shadow:0 -4px 20px rgba(0,0,0,.1)">
+  <div id="map-detail-sheet" style="display:none;background:var(--surface);border-top:1px solid var(--border);border-radius:16px 16px 0 0;padding:14px 16px 20px;box-shadow:0 -4px 20px rgba(0,0,0,.1);flex-shrink:0;max-height:50vh;overflow-y:auto">
     <div style="width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 12px"></div>
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
       <h4 id="mds-name" style="font-size:16px;font-weight:800;flex:1"></h4>
+      <button onclick="document.getElementById('map-detail-sheet').style.display='none'" style="background:none;border:none;font-size:20px;color:var(--t3);cursor:pointer;padding:0">×</button>
       <span id="mds-risk" class="energy-badge"></span>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
@@ -774,14 +840,14 @@ const S = {
 //  건물별 에너지 예측 데이터 (시뮬레이션 기반)
 // ═══════════════════════════════════════════════════════════
 const BLDG_ENERGY = {
-  "백년관":       {mean:43.26,p10:35.65,p90:51.29,risk:"HIGH",  floor:11,has_elevator:true},
-  "어문학관":     {mean:41.50,p10:27.79,p90:56.17,risk:"HIGH",  floor:5, has_elevator:false},
-  "공학관":       {mean:31.40,p10:15.46,p90:46.49,risk:"HIGH",  floor:5, has_elevator:false},
-  "기숙사_B동":   {mean:19.18,p10:15.62,p90:22.92,risk:"MEDIUM",floor:8, has_elevator:true},
-  "기숙사_C동":   {mean:19.13,p10:15.31,p90:23.05,risk:"MEDIUM",floor:8, has_elevator:true},
-  "기숙사_A동":   {mean:19.12,p10:15.48,p90:23.01,risk:"MEDIUM",floor:8, has_elevator:true},
-  "기숙사_D동":   {mean:19.07,p10:15.40,p90:23.01,risk:"MEDIUM",floor:4, has_elevator:false},
-  "기숙사_E동":   {mean:18.96,p10:15.19,p90:22.92,risk:"MEDIUM",floor:4, has_elevator:false},
+  "백년관":       {mean:33.3,p10:27.86,p90:38.84,risk:"HIGH",  floor:11,has_elevator:true},
+  "어문학관":     {mean:44.56,p10:29.9,p90:61.13,risk:"HIGH",  floor:5, has_elevator:false},
+  "공학관":       {mean:32.79,p10:15.59,p90:49.37,risk:"HIGH",  floor:5, has_elevator:false},
+  "기숙사_B동":   {mean:10.91,p10:9.19,p90:12.95,risk:"MEDIUM",floor:8, has_elevator:true},
+  "기숙사_C동":   {mean:10.98,p10:9.27,p90:12.92,risk:"MEDIUM",floor:8, has_elevator:true},
+  "기숙사_A동":   {mean:10.96,p10:9.29,p90:12.87,risk:"MEDIUM",floor:8, has_elevator:true},
+  "기숙사_D동":   {mean:10.94,p10:9.14,p90:12.98,risk:"MEDIUM",floor:4, has_elevator:false},
+  "기숙사_E동":   {mean:10.97,p10:9.39,p90:12.99,risk:"MEDIUM",floor:4, has_elevator:false},
   "자연과학관":   {mean:13.63,p10:9.56, p90:17.90,risk:"MEDIUM",floor:5, has_elevator:true},
   "인문경상관":   {mean:4.97, p10:2.64, p90:6.93, risk:"LOW",   floor:4, has_elevator:false},
   "학생회관":     {mean:4.94, p10:2.69, p90:6.80, risk:"LOW",   floor:4, has_elevator:false},
@@ -2336,7 +2402,8 @@ function gp(n){
     const el=document.getElementById(id);
     const on=id===PGMAP[n];
     el.classList.toggle('active',on);
-    el.style.display=on?'flex':'none';
+    // pg-map은 flex로 표시 (column 레이아웃)
+    el.style.display = on ? (id==='pg-map'?'flex':'flex') : 'none';
   });
   document.querySelectorAll('.ni').forEach(btn=>{
     const lbl=btn.querySelector('.nlbl')?.textContent;
