@@ -116,7 +116,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Noto Sans KR','Segoe UI',sans
   <div id="map-wrap">
     <div id="map"></div>
     <div id="zoom-badge">🏫 캠퍼스 전체 보기</div>
-    <div id="toggle-bar">
+    <button id="gps-btn" onclick="goMyLocation()" title="현재 위치">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8" stroke-opacity=".3"/></svg>
+  내 위치
+</button>
+<div id="toggle-bar">
       <button class="tbtn on" id="btn-heat" onclick="toggleHeat()">히트맵</button>
       <button class="tbtn on" id="btn-bubble" onclick="toggleBubble()">버블</button>
     </div>
@@ -148,34 +152,34 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Noto Sans KR','Segoe UI',sans
 
 <script>
 const DATA=[
-  {building:"용인모현스위첸아파트",lat:37.334639,lng:127.254254,mean_kcal:108.22,p10_kcal:72.25,p90_kcal:142.81,risk:"HIGH",delivery_mode:"floor_delivery",max_floor:17,has_elevator:true,storage_floor:null},
-  {building:"삼일빌라",lat:37.334813,lng:127.252709,mean_kcal:51.31,p10_kcal:31.44,p90_kcal:72.33,risk:"HIGH",delivery_mode:"floor_delivery",max_floor:3,has_elevator:false,storage_floor:null},
-  {building:"노블레스빌_31-26",lat:37.334563,lng:127.251781,mean_kcal:47.84,p10_kcal:26.28,p90_kcal:74.03,risk:"HIGH",delivery_mode:"floor_delivery",max_floor:4,has_elevator:false,storage_floor:null},
-  {building:"어문학관",lat:37.338494,lng:127.273818,mean_kcal:44.56,p10_kcal:29.90,p90_kcal:61.13,risk:"HIGH",delivery_mode:"floor_delivery",max_floor:5,has_elevator:false,storage_floor:null},
-  {building:"파인빌",lat:37.336309,lng:127.254254,mean_kcal:41.53,p10_kcal:25.06,p90_kcal:60.82,risk:"HIGH",delivery_mode:"floor_delivery",max_floor:4,has_elevator:false,storage_floor:null},
-  {building:"스위트빌",lat:37.334078,lng:127.252726,mean_kcal:34.89,p10_kcal:18.12,p90_kcal:53.74,risk:"HIGH",delivery_mode:"floor_delivery",max_floor:4,has_elevator:false,storage_floor:null},
-  {building:"백년관",lat:37.337331,lng:127.265474,mean_kcal:33.30,p10_kcal:27.86,p90_kcal:38.84,risk:"HIGH",delivery_mode:"floor_delivery",max_floor:11,has_elevator:true,storage_floor:null},
-  {building:"공학관",lat:37.337721,lng:127.267763,mean_kcal:32.79,p10_kcal:15.59,p90_kcal:49.37,risk:"HIGH",delivery_mode:"mixed",max_floor:5,has_elevator:false,storage_floor:2},
-  {building:"노블레스빌",lat:37.337488,lng:127.25329,mean_kcal:19.35,p10_kcal:8.32,p90_kcal:32.25,risk:"MEDIUM",delivery_mode:"floor_delivery",max_floor:4,has_elevator:false,storage_floor:null},
-  {building:"프리하임빌",lat:37.337251,lng:127.253889,mean_kcal:19.15,p10_kcal:8.13,p90_kcal:32.04,risk:"MEDIUM",delivery_mode:"floor_delivery",max_floor:4,has_elevator:false,storage_floor:null},
-  {building:"메르시타운빌",lat:37.337493,lng:127.254086,mean_kcal:19.15,p10_kcal:8.13,p90_kcal:32.04,risk:"MEDIUM",delivery_mode:"floor_delivery",max_floor:4,has_elevator:false,storage_floor:null},
-  {building:"동양주택",lat:37.335226,lng:127.252613,mean_kcal:17.93,p10_kcal:8.33,p90_kcal:27.81,risk:"MEDIUM",delivery_mode:"floor_delivery",max_floor:3,has_elevator:false,storage_floor:null},
-  {building:"화전빌라",lat:37.336594,lng:127.253394,mean_kcal:11.37,p10_kcal:1.45,p90_kcal:21.66,risk:"MEDIUM",delivery_mode:"floor_delivery",max_floor:4,has_elevator:false,storage_floor:null},
-  {building:"자연과학관",lat:37.33888,lng:127.266147,mean_kcal:11.13,p10_kcal:7.62,p90_kcal:14.20,risk:"MEDIUM",delivery_mode:"floor_delivery",max_floor:5,has_elevator:true,storage_floor:null},
-  {building:"기숙사_C동",lat:37.335178,lng:127.263631,mean_kcal:10.98,p10_kcal:9.27,p90_kcal:12.92,risk:"MEDIUM",delivery_mode:"storage",max_floor:8,has_elevator:true,storage_floor:1},
-  {building:"기숙사_E동",lat:37.333157,lng:127.261437,mean_kcal:10.97,p10_kcal:9.39,p90_kcal:12.99,risk:"MEDIUM",delivery_mode:"storage",max_floor:4,has_elevator:false,storage_floor:1},
-  {building:"기숙사_A동",lat:37.334453,lng:127.26271,mean_kcal:10.96,p10_kcal:9.29,p90_kcal:12.87,risk:"MEDIUM",delivery_mode:"storage",max_floor:8,has_elevator:true,storage_floor:1},
-  {building:"기숙사_D동",lat:37.333698,lng:127.262573,mean_kcal:10.94,p10_kcal:9.14,p90_kcal:12.98,risk:"MEDIUM",delivery_mode:"storage",max_floor:4,has_elevator:false,storage_floor:1},
-  {building:"뷰티풀빌",lat:37.337416,lng:127.254557,mean_kcal:10.92,p10_kcal:1.45,p90_kcal:20.74,risk:"MEDIUM",delivery_mode:"floor_delivery",max_floor:4,has_elevator:false,storage_floor:null},
-  {building:"기숙사_B동",lat:37.33513,lng:127.262692,mean_kcal:10.91,p10_kcal:9.19,p90_kcal:12.95,risk:"MEDIUM",delivery_mode:"storage",max_floor:8,has_elevator:true,storage_floor:1},
-  {building:"한일빌라",lat:37.335432,lng:127.253437,mean_kcal:8.84,p10_kcal:1.59,p90_kcal:14.65,risk:"LOW",delivery_mode:"floor_delivery",max_floor:4,has_elevator:false,storage_floor:null},
-  {building:"이츠빌리지",lat:37.336842,lng:127.253741,mean_kcal:6.17,p10_kcal:1.32,p90_kcal:11.12,risk:"LOW",delivery_mode:"floor_delivery",max_floor:3,has_elevator:false,storage_floor:null},
-  {building:"성일맨션",lat:37.335236,lng:127.252081,mean_kcal:3.68,p10_kcal:1.28,p90_kcal:7.49,risk:"LOW",delivery_mode:"floor_delivery",max_floor:2,has_elevator:false,storage_floor:null},
-  {building:"인문경상관",lat:37.339748,lng:127.27456,mean_kcal:3.07,p10_kcal:2.00,p90_kcal:4.16,risk:"LOW",delivery_mode:"storage",max_floor:4,has_elevator:false,storage_floor:1},
-  {building:"학생회관",lat:37.337189,lng:127.269769,mean_kcal:3.06,p10_kcal:2.01,p90_kcal:4.13,risk:"LOW",delivery_mode:"storage",max_floor:4,has_elevator:false,storage_floor:1},
-  {building:"창업보육센터",lat:37.339062,lng:127.267414,mean_kcal:3.06,p10_kcal:2.02,p90_kcal:4.15,risk:"LOW",delivery_mode:"storage",max_floor:4,has_elevator:false,storage_floor:1},
-  {building:"교양관",lat:37.33974,lng:127.272058,mean_kcal:3.04,p10_kcal:2.00,p90_kcal:4.14,risk:"LOW",delivery_mode:"storage",max_floor:5,has_elevator:true,storage_floor:1},
-  {building:"후생복지관",lat:37.337753,lng:127.268621,mean_kcal:3.02,p10_kcal:1.99,p90_kcal:4.09,risk:"LOW",delivery_mode:"storage",max_floor:4,has_elevator:false,storage_floor:1}
+  {building:"용인모현스위첸아파트",lat:37.334639,lng:127.254254,mean_kcal:91.717,p10_kcal:74.148,p90_kcal:109.796,risk:"HIGH",delivery_mode:"floor_delivery",max_floor:17,has_elevator:true,storage_floor:null},
+  {building:"어문학관",lat:37.338494,lng:127.273818,mean_kcal:44.561,p10_kcal:29.901,p90_kcal:61.129,risk:"HIGH",delivery_mode:"floor_delivery",max_floor:5,has_elevator:false,storage_floor:null},
+  {building:"삼일빌라",lat:37.334813,lng:127.252709,mean_kcal:34.419,p10_kcal:22.241,p90_kcal:47.85,risk:"HIGH",delivery_mode:"floor_delivery",max_floor:3,has_elevator:false,storage_floor:null},
+  {building:"백년관",lat:37.337331,lng:127.265474,mean_kcal:33.303,p10_kcal:27.863,p90_kcal:38.843,risk:"HIGH",delivery_mode:"floor_delivery",max_floor:11,has_elevator:true,storage_floor:null},
+  {building:"공학관",lat:37.337721,lng:127.267763,mean_kcal:32.789,p10_kcal:15.589,p90_kcal:49.374,risk:"HIGH",delivery_mode:"mixed",max_floor:5,has_elevator:false,storage_floor:2},
+  {building:"노블레스빌_31-26",lat:37.334563,lng:127.251781,mean_kcal:32.445,p10_kcal:22.135,p90_kcal:42.894,risk:"HIGH",delivery_mode:"floor_delivery",max_floor:4,has_elevator:false,storage_floor:null},
+  {building:"파인빌",lat:37.336309,lng:127.254254,mean_kcal:29.856,p10_kcal:19.565,p90_kcal:40.971,risk:"HIGH",delivery_mode:"floor_delivery",max_floor:4,has_elevator:false,storage_floor:null},
+  {building:"스위트빌",lat:37.334078,lng:127.252726,mean_kcal:26.733,p10_kcal:15.69,p90_kcal:37.109,risk:"HIGH",delivery_mode:"floor_delivery",max_floor:4,has_elevator:false,storage_floor:null},
+  {building:"프리하임빌",lat:37.337251,lng:127.253889,mean_kcal:17.661,p10_kcal:9.299,p90_kcal:25.782,risk:"MEDIUM",delivery_mode:"floor_delivery",max_floor:4,has_elevator:false,storage_floor:null},
+  {building:"메르시타운빌",lat:37.337493,lng:127.254086,mean_kcal:17.478,p10_kcal:7.032,p90_kcal:25.76,risk:"MEDIUM",delivery_mode:"floor_delivery",max_floor:4,has_elevator:false,storage_floor:null},
+  {building:"노블레스빌",lat:37.337488,lng:127.25329,mean_kcal:17.263,p10_kcal:7.125,p90_kcal:25.724,risk:"MEDIUM",delivery_mode:"floor_delivery",max_floor:4,has_elevator:false,storage_floor:null},
+  {building:"동양주택",lat:37.335226,lng:127.252613,mean_kcal:14.888,p10_kcal:7.583,p90_kcal:21.609,risk:"MEDIUM",delivery_mode:"floor_delivery",max_floor:3,has_elevator:false,storage_floor:null},
+  {building:"화전빌라",lat:37.336594,lng:127.253394,mean_kcal:11.922,p10_kcal:2.733,p90_kcal:20.868,risk:"MEDIUM",delivery_mode:"floor_delivery",max_floor:4,has_elevator:false,storage_floor:null},
+  {building:"뷰티풀빌",lat:37.337416,lng:127.254557,mean_kcal:11.873,p10_kcal:2.859,p90_kcal:20.46,risk:"MEDIUM",delivery_mode:"floor_delivery",max_floor:4,has_elevator:false,storage_floor:null},
+  {building:"자연과학관",lat:37.33888,lng:127.266147,mean_kcal:11.133,p10_kcal:7.615,p90_kcal:14.202,risk:"MEDIUM",delivery_mode:"floor_delivery",max_floor:5,has_elevator:true,storage_floor:null},
+  {building:"기숙사_C동",lat:37.335178,lng:127.263631,mean_kcal:10.978,p10_kcal:9.265,p90_kcal:12.918,risk:"MEDIUM",delivery_mode:"storage",max_floor:8,has_elevator:true,storage_floor:1},
+  {building:"기숙사_E동",lat:37.333157,lng:127.261437,mean_kcal:10.973,p10_kcal:9.387,p90_kcal:12.989,risk:"MEDIUM",delivery_mode:"storage",max_floor:4,has_elevator:false,storage_floor:1},
+  {building:"기숙사_A동",lat:37.334453,lng:127.26271,mean_kcal:10.956,p10_kcal:9.285,p90_kcal:12.867,risk:"MEDIUM",delivery_mode:"storage",max_floor:8,has_elevator:true,storage_floor:1},
+  {building:"기숙사_D동",lat:37.333698,lng:127.262573,mean_kcal:10.94,p10_kcal:9.136,p90_kcal:12.976,risk:"MEDIUM",delivery_mode:"storage",max_floor:4,has_elevator:false,storage_floor:1},
+  {building:"기숙사_B동",lat:37.33513,lng:127.262692,mean_kcal:10.907,p10_kcal:9.192,p90_kcal:12.948,risk:"MEDIUM",delivery_mode:"storage",max_floor:8,has_elevator:true,storage_floor:1},
+  {building:"한일빌라",lat:37.335432,lng:127.253437,mean_kcal:9.911,p10_kcal:2.732,p90_kcal:17.032,risk:"MEDIUM",delivery_mode:"floor_delivery",max_floor:4,has_elevator:false,storage_floor:null},
+  {building:"이츠빌리지",lat:37.336842,lng:127.253741,mean_kcal:7.198,p10_kcal:2.469,p90_kcal:13.03,risk:"LOW",delivery_mode:"floor_delivery",max_floor:3,has_elevator:false,storage_floor:null},
+  {building:"성일맨션",lat:37.335236,lng:127.252081,mean_kcal:4.697,p10_kcal:2.369,p90_kcal:6.717,risk:"LOW",delivery_mode:"floor_delivery",max_floor:2,has_elevator:false,storage_floor:null},
+  {building:"인문경상관",lat:37.339748,lng:127.27456,mean_kcal:3.073,p10_kcal:2.005,p90_kcal:4.159,risk:"LOW",delivery_mode:"storage",max_floor:4,has_elevator:false,storage_floor:1},
+  {building:"학생회관",lat:37.337189,lng:127.269769,mean_kcal:3.055,p10_kcal:2.013,p90_kcal:4.131,risk:"LOW",delivery_mode:"storage",max_floor:4,has_elevator:false,storage_floor:1},
+  {building:"창업보육센터",lat:37.339062,lng:127.267414,mean_kcal:3.055,p10_kcal:2.02,p90_kcal:4.149,risk:"LOW",delivery_mode:"storage",max_floor:4,has_elevator:false,storage_floor:1},
+  {building:"교양관",lat:37.33974,lng:127.272058,mean_kcal:3.038,p10_kcal:2.002,p90_kcal:4.14,risk:"LOW",delivery_mode:"storage",max_floor:5,has_elevator:true,storage_floor:1},
+  {building:"후생복지관",lat:37.337753,lng:127.268621,mean_kcal:3.018,p10_kcal:1.99,p90_kcal:4.095,risk:"LOW",delivery_mode:"storage",max_floor:4,has_elevator:false,storage_floor:1}
 ];
 
 const MODE_KR={storage:"보관소 집중",floor_delivery:"층별 직접배송",mixed:"혼합"};
@@ -367,6 +371,64 @@ DATA.forEach((d,i)=>{
   });
   list.appendChild(el);
 });
+
+// ── 현재 위치 ──────────────────────────────────────────────
+let myLocationMarker = null;
+let myLocationCircle = null;
+let watchId = null;
+
+function goMyLocation(){
+  const btn = document.getElementById('gps-btn');
+  if(!navigator.geolocation){
+    alert('이 브라우저는 위치 서비스를 지원하지 않아요.');
+    return;
+  }
+  btn.classList.add('active');
+  btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="4"/></svg> 위치 찾는 중…';
+
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      const acc = pos.coords.accuracy;
+      showMyLocation(lat, lng, acc);
+      map.setCenter(new naver.maps.LatLng(lat, lng));
+      map.setZoom(17);
+      btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="4"/></svg> 내 위치';
+    },
+    err => {
+      btn.classList.remove('active');
+      btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg> 내 위치';
+      if(err.code === 1) alert('위치 권한을 허용해주세요.');
+      else alert('위치를 가져올 수 없어요.');
+    },
+    {enableHighAccuracy: true, timeout: 10000, maximumAge: 0}
+  );
+}
+
+function showMyLocation(lat, lng, acc){
+  // 기존 마커/원 제거
+  if(myLocationMarker) myLocationMarker.setMap(null);
+  if(myLocationCircle) myLocationCircle.setMap(null);
+
+  // 정확도 원
+  myLocationCircle = new naver.maps.Circle({
+    map, center: new naver.maps.LatLng(lat, lng),
+    radius: acc, fillColor:'#3b82f6', fillOpacity:0.10,
+    strokeColor:'#3b82f6', strokeWeight:1, strokeOpacity:0.4
+  });
+
+  // 내 위치 마커 (파란 점)
+  const html = `<div style="width:16px;height:16px;border-radius:50%;background:#3b82f6;border:3px solid #fff;box-shadow:0 0 0 2px #3b82f688;transform:translate(-50%,-50%)">
+    <div style="position:absolute;width:32px;height:32px;border-radius:50%;border:2px solid #3b82f655;top:-10px;left:-10px;animation:pulse 2s infinite"></div>
+  </div>`;
+  myLocationMarker = new naver.maps.Marker({
+    position: new naver.maps.LatLng(lat, lng),
+    map,
+    icon: {content: html, anchor: new naver.maps.Point(8, 8)}
+  });
+}
+
 </script>
 </body>
 </html>
@@ -526,6 +588,64 @@ DATA.forEach((d,i)=>{
   });
   list.appendChild(el);
 });
+
+// ── 현재 위치 ──────────────────────────────────────────────
+let myLocationMarker = null;
+let myLocationCircle = null;
+let watchId = null;
+
+function goMyLocation(){
+  const btn = document.getElementById('gps-btn');
+  if(!navigator.geolocation){
+    alert('이 브라우저는 위치 서비스를 지원하지 않아요.');
+    return;
+  }
+  btn.classList.add('active');
+  btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="4"/></svg> 위치 찾는 중…';
+
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      const acc = pos.coords.accuracy;
+      showMyLocation(lat, lng, acc);
+      map.setCenter(new naver.maps.LatLng(lat, lng));
+      map.setZoom(17);
+      btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="4"/></svg> 내 위치';
+    },
+    err => {
+      btn.classList.remove('active');
+      btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg> 내 위치';
+      if(err.code === 1) alert('위치 권한을 허용해주세요.');
+      else alert('위치를 가져올 수 없어요.');
+    },
+    {enableHighAccuracy: true, timeout: 10000, maximumAge: 0}
+  );
+}
+
+function showMyLocation(lat, lng, acc){
+  // 기존 마커/원 제거
+  if(myLocationMarker) myLocationMarker.setMap(null);
+  if(myLocationCircle) myLocationCircle.setMap(null);
+
+  // 정확도 원
+  myLocationCircle = new naver.maps.Circle({
+    map, center: new naver.maps.LatLng(lat, lng),
+    radius: acc, fillColor:'#3b82f6', fillOpacity:0.10,
+    strokeColor:'#3b82f6', strokeWeight:1, strokeOpacity:0.4
+  });
+
+  // 내 위치 마커 (파란 점)
+  const html = `<div style="width:16px;height:16px;border-radius:50%;background:#3b82f6;border:3px solid #fff;box-shadow:0 0 0 2px #3b82f688;transform:translate(-50%,-50%)">
+    <div style="position:absolute;width:32px;height:32px;border-radius:50%;border:2px solid #3b82f655;top:-10px;left:-10px;animation:pulse 2s infinite"></div>
+  </div>`;
+  myLocationMarker = new naver.maps.Marker({
+    position: new naver.maps.LatLng(lat, lng),
+    map,
+    icon: {content: html, anchor: new naver.maps.Point(8, 8)}
+  });
+}
+
 </script>
 </body>
 </html>
