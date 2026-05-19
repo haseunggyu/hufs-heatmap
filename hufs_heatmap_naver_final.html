@@ -60,9 +60,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Noto Sans KR','Segoe UI',sans
 .nv-bubble{display:flex;flex-direction:column;align-items:center;cursor:pointer;transform:translate(-50%,-100%);}
 .nv-box{background:#fff;border-radius:8px;padding:4px 9px;white-space:nowrap;text-align:center;position:relative;}
 .nv-box::after{content:'';position:absolute;bottom:-7px;left:50%;transform:translateX(-50%);border:4px solid transparent;}
-.nv-box.HIGH{border:2px solid #ff4444;box-shadow:0 2px 8px rgba(255,68,68,.2);}.nv-box.HIGH::after{border-top-color:#ff4444;}
-.nv-box.MEDIUM{border:2px solid #ff8800;box-shadow:0 2px 8px rgba(255,136,0,.2);}.nv-box.MEDIUM::after{border-top-color:#ff8800;}
-.nv-box.LOW{border:2px solid #03c75a;box-shadow:0 2px 8px rgba(3,199,90,.15);}.nv-box.LOW::after{border-top-color:#03c75a;}
 .nv-name{font-size:9px;font-weight:700;color:#555;margin-bottom:1px;}
 .nv-range{font-size:11px;font-weight:700;color:#111;}
 .nv-unit{font-size:9px;color:#888;}
@@ -116,7 +113,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Noto Sans KR','Segoe UI',sans
       <div id="dn"></div><div id="dm"></div>
       <div class="dsr">
         <div class="ds"><div class="dsl">평균 에너지</div><div class="dsv" id="d-mean"></div><div class="dsu">kcal</div></div>
-        <div class="ds"><div class="dsl">위험 등급</div><div style="margin-top:5px" id="d-risk"></div></div>
+        <div class="ds"><div class="dsl">에너지</div><div style="margin-top:5px" id="d-risk"></div></div>
       </div>
       <div class="drb"><div class="drf" id="d-bar"></div></div>
       <div class="drt"><span id="d-p10"></span><span id="d-p90"></span></div>
@@ -135,7 +132,6 @@ const DATA=[
   {building:"삼일빌라",lat:37.334813,lng:127.252709,mean_kcal:51.31,p10_kcal:31.44,p90_kcal:72.33,risk:"HIGH",delivery_mode:"floor_delivery",max_floor:3,has_elevator:false,storage_floor:null},
   {building:"노블레스빌_31-26",lat:37.334563,lng:127.251781,mean_kcal:47.84,p10_kcal:26.28,p90_kcal:74.03,risk:"HIGH",delivery_mode:"floor_delivery",max_floor:4,has_elevator:false,storage_floor:null},
   {building:"어문학관",lat:37.338494,lng:127.273818,mean_kcal:44.56,p10_kcal:29.90,p90_kcal:61.13,risk:"HIGH",delivery_mode:"floor_delivery",max_floor:5,has_elevator:false,storage_floor:null},
-  {building:"왕산맨션",lat:37.333900,lng:127.266500,mean_kcal:42.88,p10_kcal:23.71,p90_kcal:62.69,risk:"HIGH",delivery_mode:"floor_delivery",max_floor:4,has_elevator:false,storage_floor:null},
   {building:"파인빌",lat:37.336309,lng:127.254254,mean_kcal:41.53,p10_kcal:25.06,p90_kcal:60.82,risk:"HIGH",delivery_mode:"floor_delivery",max_floor:4,has_elevator:false,storage_floor:null},
   {building:"백년관",lat:37.337331,lng:127.265474,mean_kcal:33.30,p10_kcal:27.86,p90_kcal:38.84,risk:"HIGH",delivery_mode:"floor_delivery",max_floor:11,has_elevator:true,storage_floor:null},
   {building:"공학관",lat:37.337721,lng:127.267763,mean_kcal:32.79,p10_kcal:15.59,p90_kcal:49.37,risk:"HIGH",delivery_mode:"mixed",max_floor:5,has_elevator:false,storage_floor:2},
