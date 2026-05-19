@@ -64,9 +64,28 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Noto Sans KR','Segoe UI',sans
 .nv-range{font-size:11px;font-weight:700;color:#111;}
 .nv-unit{font-size:9px;color:#888;}
 .nv-dot{width:7px;height:7px;border-radius:50%;margin-top:2px;}
-/* ── 모바일 세로 반응형 ── */
-#mob-toggle{display:none;position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:600;background:#03c75a;color:#fff;border:none;border-radius:24px;padding:10px 24px;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(3,199,90,.4);white-space:nowrap;}
+/* 데스크탑 사이드바 접기 버튼 */
+#collapse-btn{
+  position:absolute;top:50%;right:-28px;transform:translateY(-50%);
+  width:28px;height:56px;background:#fff;border:1px solid #e0e0e0;border-left:none;
+  border-radius:0 8px 8px 0;cursor:pointer;font-size:11px;color:#888;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:2px 0 6px rgba(0,0,0,.08);z-index:10;transition:all .2s;
+}
+#collapse-btn:hover{background:#f5f5f5;color:#333;}
+#sidebar.collapsed{transform:translateX(calc(-100% + 0px));transition:transform .3s ease;}
+#sidebar:not(.collapsed){transition:transform .3s ease;}
+/* 사이드바 접혔을 때 지도 확장 */
+#app.sidebar-hidden #sidebar{transform:translateX(-100%);}
+#app.sidebar-hidden #map-wrap{width:100%;}
+/* 모바일 닫기 버튼 */
+#mob-close{display:none;}
 @media (max-width:640px){
+  #collapse-btn{display:none;}
+  #mob-close{
+    display:block;position:absolute;top:14px;right:14px;
+    background:none;border:none;font-size:20px;color:#999;cursor:pointer;padding:4px 8px;
+  }
   #app{flex-direction:column;}
   #sidebar{width:100%;order:2;position:fixed;bottom:0;left:0;right:0;max-height:55vh;border-radius:20px 20px 0 0;box-shadow:0 -4px 20px rgba(0,0,0,.15);transform:translateY(100%);transition:transform .3s ease;z-index:600;}
   #sidebar.open{transform:translateY(0);}
@@ -85,6 +104,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Noto Sans KR','Segoe UI',sans
 <button id="mob-toggle" onclick="toggleSidebar()">📊 랭킹 보기</button>
 <div id="app">
   <div id="sidebar">
+    <button id="collapse-btn" onclick="toggleCollapse()" title="접기">◀</button>
+    <button id="mob-close" onclick="toggleSidebar()">✕</button>
     <div id="sidebar-header">
       <h1>⚡ 에너지맵</h1>
       <p>한국외대 글로벌캠퍼스 · 배송 에너지 소비 예측</p>
@@ -128,32 +149,32 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Noto Sans KR','Segoe UI',sans
 <script>
 const DATA=[
   {building:"용인모현스위첸아파트",lat:37.334639,lng:127.254254,mean_kcal:108.22,p10_kcal:72.25,p90_kcal:142.81,risk:"HIGH",delivery_mode:"floor_delivery",max_floor:17,has_elevator:true,storage_floor:null},
-  {building:"화전빌라",lat:37.336594,lng:127.253394,mean_kcal:11.37,p10_kcal:1.45,p90_kcal:21.66,risk:"MEDIUM",delivery_mode:"floor_delivery",max_floor:4,has_elevator:false,storage_floor:null},
   {building:"삼일빌라",lat:37.334813,lng:127.252709,mean_kcal:51.31,p10_kcal:31.44,p90_kcal:72.33,risk:"HIGH",delivery_mode:"floor_delivery",max_floor:3,has_elevator:false,storage_floor:null},
   {building:"노블레스빌_31-26",lat:37.334563,lng:127.251781,mean_kcal:47.84,p10_kcal:26.28,p90_kcal:74.03,risk:"HIGH",delivery_mode:"floor_delivery",max_floor:4,has_elevator:false,storage_floor:null},
   {building:"어문학관",lat:37.338494,lng:127.273818,mean_kcal:44.56,p10_kcal:29.90,p90_kcal:61.13,risk:"HIGH",delivery_mode:"floor_delivery",max_floor:5,has_elevator:false,storage_floor:null},
   {building:"파인빌",lat:37.336309,lng:127.254254,mean_kcal:41.53,p10_kcal:25.06,p90_kcal:60.82,risk:"HIGH",delivery_mode:"floor_delivery",max_floor:4,has_elevator:false,storage_floor:null},
+  {building:"스위트빌",lat:37.334078,lng:127.252726,mean_kcal:34.89,p10_kcal:18.12,p90_kcal:53.74,risk:"HIGH",delivery_mode:"floor_delivery",max_floor:4,has_elevator:false,storage_floor:null},
   {building:"백년관",lat:37.337331,lng:127.265474,mean_kcal:33.30,p10_kcal:27.86,p90_kcal:38.84,risk:"HIGH",delivery_mode:"floor_delivery",max_floor:11,has_elevator:true,storage_floor:null},
   {building:"공학관",lat:37.337721,lng:127.267763,mean_kcal:32.79,p10_kcal:15.59,p90_kcal:49.37,risk:"HIGH",delivery_mode:"mixed",max_floor:5,has_elevator:false,storage_floor:2},
-  {building:"스위트빌",lat:37.334078,lng:127.252726,mean_kcal:34.89,p10_kcal:18.12,p90_kcal:53.74,risk:"HIGH",delivery_mode:"floor_delivery",max_floor:4,has_elevator:false,storage_floor:null},
   {building:"노블레스빌",lat:37.337488,lng:127.25329,mean_kcal:19.35,p10_kcal:8.32,p90_kcal:32.25,risk:"MEDIUM",delivery_mode:"floor_delivery",max_floor:4,has_elevator:false,storage_floor:null},
   {building:"프리하임빌",lat:37.337251,lng:127.253889,mean_kcal:19.15,p10_kcal:8.13,p90_kcal:32.04,risk:"MEDIUM",delivery_mode:"floor_delivery",max_floor:4,has_elevator:false,storage_floor:null},
   {building:"메르시타운빌",lat:37.337493,lng:127.254086,mean_kcal:19.15,p10_kcal:8.13,p90_kcal:32.04,risk:"MEDIUM",delivery_mode:"floor_delivery",max_floor:4,has_elevator:false,storage_floor:null},
   {building:"동양주택",lat:37.335226,lng:127.252613,mean_kcal:17.93,p10_kcal:8.33,p90_kcal:27.81,risk:"MEDIUM",delivery_mode:"floor_delivery",max_floor:3,has_elevator:false,storage_floor:null},
+  {building:"화전빌라",lat:37.336594,lng:127.253394,mean_kcal:11.37,p10_kcal:1.45,p90_kcal:21.66,risk:"MEDIUM",delivery_mode:"floor_delivery",max_floor:4,has_elevator:false,storage_floor:null},
   {building:"자연과학관",lat:37.33888,lng:127.266147,mean_kcal:11.13,p10_kcal:7.62,p90_kcal:14.20,risk:"MEDIUM",delivery_mode:"floor_delivery",max_floor:5,has_elevator:true,storage_floor:null},
   {building:"기숙사_C동",lat:37.335178,lng:127.263631,mean_kcal:10.98,p10_kcal:9.27,p90_kcal:12.92,risk:"MEDIUM",delivery_mode:"storage",max_floor:8,has_elevator:true,storage_floor:1},
   {building:"기숙사_E동",lat:37.333157,lng:127.261437,mean_kcal:10.97,p10_kcal:9.39,p90_kcal:12.99,risk:"MEDIUM",delivery_mode:"storage",max_floor:4,has_elevator:false,storage_floor:1},
   {building:"기숙사_A동",lat:37.334453,lng:127.26271,mean_kcal:10.96,p10_kcal:9.29,p90_kcal:12.87,risk:"MEDIUM",delivery_mode:"storage",max_floor:8,has_elevator:true,storage_floor:1},
   {building:"기숙사_D동",lat:37.333698,lng:127.262573,mean_kcal:10.94,p10_kcal:9.14,p90_kcal:12.98,risk:"MEDIUM",delivery_mode:"storage",max_floor:4,has_elevator:false,storage_floor:1},
-  {building:"기숙사_B동",lat:37.33513,lng:127.262692,mean_kcal:10.91,p10_kcal:9.19,p90_kcal:12.95,risk:"MEDIUM",delivery_mode:"storage",max_floor:8,has_elevator:true,storage_floor:1},
   {building:"뷰티풀빌",lat:37.337416,lng:127.254557,mean_kcal:10.92,p10_kcal:1.45,p90_kcal:20.74,risk:"MEDIUM",delivery_mode:"floor_delivery",max_floor:4,has_elevator:false,storage_floor:null},
+  {building:"기숙사_B동",lat:37.33513,lng:127.262692,mean_kcal:10.91,p10_kcal:9.19,p90_kcal:12.95,risk:"MEDIUM",delivery_mode:"storage",max_floor:8,has_elevator:true,storage_floor:1},
   {building:"한일빌라",lat:37.335432,lng:127.253437,mean_kcal:8.84,p10_kcal:1.59,p90_kcal:14.65,risk:"LOW",delivery_mode:"floor_delivery",max_floor:4,has_elevator:false,storage_floor:null},
   {building:"이츠빌리지",lat:37.336842,lng:127.253741,mean_kcal:6.17,p10_kcal:1.32,p90_kcal:11.12,risk:"LOW",delivery_mode:"floor_delivery",max_floor:3,has_elevator:false,storage_floor:null},
+  {building:"성일맨션",lat:37.335236,lng:127.252081,mean_kcal:3.68,p10_kcal:1.28,p90_kcal:7.49,risk:"LOW",delivery_mode:"floor_delivery",max_floor:2,has_elevator:false,storage_floor:null},
   {building:"인문경상관",lat:37.339748,lng:127.27456,mean_kcal:3.07,p10_kcal:2.00,p90_kcal:4.16,risk:"LOW",delivery_mode:"storage",max_floor:4,has_elevator:false,storage_floor:1},
   {building:"학생회관",lat:37.337189,lng:127.269769,mean_kcal:3.06,p10_kcal:2.01,p90_kcal:4.13,risk:"LOW",delivery_mode:"storage",max_floor:4,has_elevator:false,storage_floor:1},
   {building:"창업보육센터",lat:37.339062,lng:127.267414,mean_kcal:3.06,p10_kcal:2.02,p90_kcal:4.15,risk:"LOW",delivery_mode:"storage",max_floor:4,has_elevator:false,storage_floor:1},
   {building:"교양관",lat:37.33974,lng:127.272058,mean_kcal:3.04,p10_kcal:2.00,p90_kcal:4.14,risk:"LOW",delivery_mode:"storage",max_floor:5,has_elevator:true,storage_floor:1},
-  {building:"성일맨션",lat:37.335236,lng:127.252081,mean_kcal:3.68,p10_kcal:1.28,p90_kcal:7.49,risk:"LOW",delivery_mode:"floor_delivery",max_floor:2,has_elevator:false,storage_floor:null},
   {building:"후생복지관",lat:37.337753,lng:127.268621,mean_kcal:3.02,p10_kcal:1.99,p90_kcal:4.09,risk:"LOW",delivery_mode:"storage",max_floor:4,has_elevator:false,storage_floor:1}
 ];
 
@@ -181,6 +202,18 @@ function toggleSidebar(){
   const btn=document.getElementById('mob-toggle');
   const isOpen=sb.classList.toggle('open');
   btn.textContent=isOpen?'✕ 닫기':'📊 랭킹 보기';
+}
+function toggleCollapse(){
+  const sb=document.getElementById('sidebar');
+  const btn=document.getElementById('collapse-btn');
+  const isCollapsed=sb.classList.toggle('collapsed');
+  btn.textContent=isCollapsed?'▶':'◀';
+  btn.title=isCollapsed?'열기':'접기';
+  if(isCollapsed){
+    btn.style.cssText='position:fixed;left:0;top:50%;transform:translateY(-50%);width:28px;height:56px;background:#fff;border:1px solid #e0e0e0;border-left:none;border-radius:0 8px 8px 0;cursor:pointer;font-size:11px;color:#555;display:flex;align-items:center;justify-content:center;box-shadow:2px 0 6px rgba(0,0,0,.12);z-index:700;';
+  } else {
+    btn.style.cssText='';
+  }
 }
 // 지도 클릭 시 사이드바 닫기
 const map=new naver.maps.Map('map',{
