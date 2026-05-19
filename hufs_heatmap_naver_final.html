@@ -127,25 +127,28 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Noto Sans KR','Segoe UI',sans
 
 <script>
 const DATA=[
-  {building:"스위첸아파트",lat:37.335200,lng:127.265800,mean_kcal:55.24,p10_kcal:45.13,p90_kcal:66.00,risk:"HIGH",delivery_mode:"floor_delivery",max_floor:15,has_elevator:true,storage_floor:null},
-  {building:"어문학관",lat:37.338479,lng:127.273794,mean_kcal:44.56,p10_kcal:29.90,p90_kcal:61.13,risk:"HIGH",delivery_mode:"floor_delivery",max_floor:5,has_elevator:false,storage_floor:null},
-  {building:"노블레스빌",lat:37.334000,lng:127.264200,mean_kcal:38.15,p10_kcal:17.98,p90_kcal:62.12,risk:"HIGH",delivery_mode:"floor_delivery",max_floor:5,has_elevator:false,storage_floor:null},
-  {building:"백년관",lat:37.337236,lng:127.26545,mean_kcal:33.30,p10_kcal:27.86,p90_kcal:38.84,risk:"HIGH",delivery_mode:"floor_delivery",max_floor:11,has_elevator:true,storage_floor:null},
-  {building:"공학관",lat:37.33744,lng:127.267847,mean_kcal:32.79,p10_kcal:15.59,p90_kcal:49.37,risk:"HIGH",delivery_mode:"mixed",max_floor:5,has_elevator:false,storage_floor:2},
-  {building:"흥양빌라",lat:37.333800,lng:127.263200,mean_kcal:28.91,p10_kcal:14.51,p90_kcal:45.30,risk:"HIGH",delivery_mode:"floor_delivery",max_floor:4,has_elevator:false,storage_floor:null},
-  {building:"삼일빌라",lat:37.334200,lng:127.265000,mean_kcal:28.91,p10_kcal:14.51,p90_kcal:45.30,risk:"HIGH",delivery_mode:"floor_delivery",max_floor:4,has_elevator:false,storage_floor:null},
+  {building:"스위첸아파트",lat:37.335200,lng:127.264800,mean_kcal:75.76,p10_kcal:60.46,p90_kcal:91.97,risk:"HIGH",delivery_mode:"floor_delivery",max_floor:17,has_elevator:true,storage_floor:null},
+  {building:"어문학관",lat:37.338494,lng:127.273818,mean_kcal:44.56,p10_kcal:29.90,p90_kcal:61.13,risk:"HIGH",delivery_mode:"floor_delivery",max_floor:5,has_elevator:false,storage_floor:null},
+  {building:"왕산맨션",lat:37.333900,lng:127.266500,mean_kcal:42.88,p10_kcal:23.71,p90_kcal:62.69,risk:"HIGH",delivery_mode:"floor_delivery",max_floor:4,has_elevator:false,storage_floor:null},
+  {building:"백년관",lat:37.337331,lng:127.265474,mean_kcal:33.30,p10_kcal:27.86,p90_kcal:38.84,risk:"HIGH",delivery_mode:"floor_delivery",max_floor:11,has_elevator:true,storage_floor:null},
+  {building:"공학관",lat:37.337721,lng:127.267763,mean_kcal:32.79,p10_kcal:15.59,p90_kcal:49.37,risk:"HIGH",delivery_mode:"mixed",max_floor:5,has_elevator:false,storage_floor:2},
+  {building:"흥양빌라",lat:37.334100,lng:127.262100,mean_kcal:28.91,p10_kcal:14.51,p90_kcal:45.30,risk:"HIGH",delivery_mode:"floor_delivery",max_floor:4,has_elevator:false,storage_floor:null},
+  {building:"삼일빌라",lat:37.333600,lng:127.266800,mean_kcal:28.91,p10_kcal:14.51,p90_kcal:45.30,risk:"HIGH",delivery_mode:"floor_delivery",max_floor:4,has_elevator:false,storage_floor:null},
   {building:"한일빌라",lat:37.334800,lng:127.265500,mean_kcal:28.91,p10_kcal:14.51,p90_kcal:45.30,risk:"HIGH",delivery_mode:"floor_delivery",max_floor:4,has_elevator:false,storage_floor:null},
-  {building:"자연과학관",lat:37.338867,lng:127.266142,mean_kcal:11.13,p10_kcal:7.62,p90_kcal:14.20,risk:"MEDIUM",delivery_mode:"floor_delivery",max_floor:5,has_elevator:true,storage_floor:null},
-  {building:"기숙사_C동",lat:37.335182,lng:127.263706,mean_kcal:10.98,p10_kcal:9.27,p90_kcal:12.92,risk:"MEDIUM",delivery_mode:"storage",max_floor:8,has_elevator:true,storage_floor:1},
-  {building:"기숙사_E동",lat:37.333157,lng:127.26148,mean_kcal:10.97,p10_kcal:9.39,p90_kcal:12.99,risk:"MEDIUM",delivery_mode:"storage",max_floor:4,has_elevator:false,storage_floor:1},
-  {building:"기숙사_A동",lat:37.334441,lng:127.262748,mean_kcal:10.96,p10_kcal:9.29,p90_kcal:12.87,risk:"MEDIUM",delivery_mode:"storage",max_floor:8,has_elevator:true,storage_floor:1},
-  {building:"기숙사_D동",lat:37.333677,lng:127.262637,mean_kcal:10.94,p10_kcal:9.14,p90_kcal:12.98,risk:"MEDIUM",delivery_mode:"storage",max_floor:4,has_elevator:false,storage_floor:1},
-  {building:"기숙사_B동",lat:37.335117,lng:127.262659,mean_kcal:10.91,p10_kcal:9.19,p90_kcal:12.95,risk:"MEDIUM",delivery_mode:"storage",max_floor:8,has_elevator:true,storage_floor:1},
-  {building:"인문경상관",lat:37.339697,lng:127.274539,mean_kcal:3.07,p10_kcal:2.00,p90_kcal:4.16,risk:"LOW",delivery_mode:"storage",max_floor:4,has_elevator:false,storage_floor:1},
-  {building:"학생회관",lat:37.337121,lng:127.269742,mean_kcal:3.06,p10_kcal:2.01,p90_kcal:4.13,risk:"LOW",delivery_mode:"storage",max_floor:4,has_elevator:false,storage_floor:1},
-  {building:"창업보육센터",lat:37.339032,lng:127.267366,mean_kcal:3.06,p10_kcal:2.02,p90_kcal:4.15,risk:"LOW",delivery_mode:"storage",max_floor:4,has_elevator:false,storage_floor:1},
-  {building:"교양관",lat:37.339732,lng:127.272074,mean_kcal:3.04,p10_kcal:2.00,p90_kcal:4.14,risk:"LOW",delivery_mode:"storage",max_floor:5,has_elevator:true,storage_floor:1},
-  {building:"후생복지관",lat:37.337731,lng:127.268637,mean_kcal:3.02,p10_kcal:1.99,p90_kcal:4.09,risk:"LOW",delivery_mode:"storage",max_floor:4,has_elevator:false,storage_floor:1}
+  {building:"노블레스빌",lat:37.334200,lng:127.263600,mean_kcal:28.91,p10_kcal:14.51,p90_kcal:45.30,risk:"HIGH",delivery_mode:"floor_delivery",max_floor:4,has_elevator:false,storage_floor:null},
+  {building:"프라하임빌",lat:37.334500,lng:127.264800,mean_kcal:28.91,p10_kcal:14.51,p90_kcal:45.30,risk:"HIGH",delivery_mode:"floor_delivery",max_floor:4,has_elevator:false,storage_floor:null},
+  {building:"이츠빌리지",lat:37.333400,lng:127.264000,mean_kcal:28.91,p10_kcal:14.51,p90_kcal:45.30,risk:"HIGH",delivery_mode:"floor_delivery",max_floor:4,has_elevator:false,storage_floor:null},
+  {building:"자연과학관",lat:37.33888,lng:127.266147,mean_kcal:11.13,p10_kcal:7.62,p90_kcal:14.20,risk:"MEDIUM",delivery_mode:"floor_delivery",max_floor:5,has_elevator:true,storage_floor:null},
+  {building:"기숙사_C동",lat:37.335178,lng:127.263631,mean_kcal:10.98,p10_kcal:9.27,p90_kcal:12.92,risk:"MEDIUM",delivery_mode:"storage",max_floor:8,has_elevator:true,storage_floor:1},
+  {building:"기숙사_E동",lat:37.333157,lng:127.261437,mean_kcal:10.97,p10_kcal:9.39,p90_kcal:12.99,risk:"MEDIUM",delivery_mode:"storage",max_floor:4,has_elevator:false,storage_floor:1},
+  {building:"기숙사_A동",lat:37.334453,lng:127.26271,mean_kcal:10.96,p10_kcal:9.29,p90_kcal:12.87,risk:"MEDIUM",delivery_mode:"storage",max_floor:8,has_elevator:true,storage_floor:1},
+  {building:"기숙사_D동",lat:37.333698,lng:127.262573,mean_kcal:10.94,p10_kcal:9.14,p90_kcal:12.98,risk:"MEDIUM",delivery_mode:"storage",max_floor:4,has_elevator:false,storage_floor:1},
+  {building:"기숙사_B동",lat:37.33513,lng:127.262692,mean_kcal:10.91,p10_kcal:9.19,p90_kcal:12.95,risk:"MEDIUM",delivery_mode:"storage",max_floor:8,has_elevator:true,storage_floor:1},
+  {building:"인문경상관",lat:37.339748,lng:127.27456,mean_kcal:3.07,p10_kcal:2.00,p90_kcal:4.16,risk:"LOW",delivery_mode:"storage",max_floor:4,has_elevator:false,storage_floor:1},
+  {building:"학생회관",lat:37.337189,lng:127.269769,mean_kcal:3.06,p10_kcal:2.01,p90_kcal:4.13,risk:"LOW",delivery_mode:"storage",max_floor:4,has_elevator:false,storage_floor:1},
+  {building:"창업보육센터",lat:37.339062,lng:127.267414,mean_kcal:3.06,p10_kcal:2.02,p90_kcal:4.15,risk:"LOW",delivery_mode:"storage",max_floor:4,has_elevator:false,storage_floor:1},
+  {building:"교양관",lat:37.33974,lng:127.272058,mean_kcal:3.04,p10_kcal:2.00,p90_kcal:4.14,risk:"LOW",delivery_mode:"storage",max_floor:5,has_elevator:true,storage_floor:1},
+  {building:"후생복지관",lat:37.337753,lng:127.268621,mean_kcal:3.02,p10_kcal:1.99,p90_kcal:4.09,risk:"LOW",delivery_mode:"storage",max_floor:4,has_elevator:false,storage_floor:1}
 ];
 
 const MODE_KR={storage:"보관소 집중",floor_delivery:"층별 직접배송",mixed:"혼합"};
@@ -160,7 +163,7 @@ function toggleSidebar(){
 }
 // 지도 클릭 시 사이드바 닫기
 const map=new naver.maps.Map('map',{
-  center:new naver.maps.LatLng(37.337000,127.267000),
+  center:new naver.maps.LatLng(37.336000,127.266000),
   zoom:15,
   mapTypeId:naver.maps.MapTypeId.NORMAL
 });
@@ -179,10 +182,10 @@ DATA.forEach(d=>{
 
 // 지역 집계 마커 (줌아웃)
 const REGIONS=[
-  {name:"기숙사 단지",keys:["기숙사_A동","기숙사_B동","기숙사_C동","기숙사_D동","기숙사_E동"],lat:37.334315,lng:127.262646},
-  {name:"학술 구역",keys:["백년관","공학관","자연과학관","학생회관","후생복지관","창업보육센터"],lat:37.337700,lng:127.267500},
-  {name:"인문/어문",keys:["어문학관","교양관","인문경상관"],lat:37.339300,lng:127.273469},
-  {name:"주거지역",keys:["스위첸아파트","노블레스빌","흥양빌라","삼일빌라","한일빌라"],lat:37.334500,lng:127.264500}
+  {name:"기숙사 단지",keys:["기숙사_A동","기숙사_B동","기숙사_C동","기숙사_D동","기숙사_E동"],lat:37.334300,lng:127.262600},
+  {name:"학술 구역",keys:["백년관","공학관","자연과학관","학생회관","후생복지관","창업보육센터"],lat:37.337800,lng:127.267500},
+  {name:"인문/어문",keys:["어문학관","교양관","인문경상관"],lat:37.339200,lng:127.273100},
+  {name:"주거지역",keys:["스위첸아파트","왕산맨션","흥양빌라","삼일빌라","한일빌라","노블레스빌","프라하임빌","이츠빌리지"],lat:37.334000,lng:127.264500}
 ];
 const regionMarkers=[];
 REGIONS.forEach(r=>{
