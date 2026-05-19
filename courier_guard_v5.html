@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>과로제로 — 배송원 작업부하 관리</title>
-<script src="https://openapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=825xps0pwx"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap');
@@ -20,85 +19,6 @@
   --purple:#7C3AED;--purple-bg:#EDE9FE;
   --r:12px;--sh:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04);
   --sh2:0 4px 16px rgba(0,0,0,.10);
-}
-
-/* GPS & 에너지 배지 */
-.gps-chip{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;background:var(--blue-bg);color:var(--blue)}
-.gps-chip.active{background:var(--green-bg);color:#065F46}
-.energy-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px}
-.energy-HIGH{background:var(--red-bg);color:var(--red)}
-.energy-MEDIUM{background:var(--orange-bg);color:var(--orange)}
-.energy-LOW{background:var(--green-bg);color:var(--green)}
-.bldg-energy-card{margin-top:8px;padding:10px 12px;border-radius:9px;background:var(--bg);border:1px solid var(--border);font-size:11px}
-.bldg-energy-title{font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:6px}
-.bldg-energy-row{display:flex;justify-content:space-between;color:var(--t2);margin-top:3px}
-/* 미니맵 */
-#mini-map{width:100%;height:200px;border-radius:var(--r);overflow:hidden;border:1px solid var(--border)}
-.map-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh)}
-
-/* ── 모바일 세로 모드 최적화 ── */
-@media (max-width:480px){
-  /* 기본 패딩 축소 */
-  .body{padding:12px;gap:10px}
-  .card{padding:12px}
-  /* 헤더 축소 */
-  .hdr{padding:10px 14px}
-  .logo-txt{font-size:15px}
-  /* 에너지 그리드: 세로로 변경 */
-  .egrid{grid-template-columns:1fr 1fr;gap:8px}
-  .ebox .ev{font-size:20px}
-  /* IMU 센서 레이아웃 */
-  .imu-g{grid-template-columns:1fr 1fr;gap:8px}
-  /* WSI 바 */
-  .wsiv{font-size:22px}
-  /* 버튼 */
-  .brow{gap:7px}
-  .bcomp,.bsec,.bphoto{padding:10px;font-size:12px}
-  /* 배송 목록 */
-  .di{padding:10px 12px}
-  .diaddr{font-size:12px}
-  /* 배지 줄바꿈 허용 */
-  .di-bot{flex-wrap:wrap;gap:4px}
-  /* 로그인 */
-  .fr{grid-template-columns:1fr 1fr}
-  /* 에너지맵 페이지 */
-  #energy-map{min-height:0;flex:1}
-  /* 바텀시트 */
-  #map-detail-sheet{padding:12px 14px 16px}
-  /* 미니맵 높이 축소 */
-  #mini-map{height:160px}
-  /* 인사 카드 */
-  .gc{padding:14px}
-  .gc h2{font-size:16px}
-  .gss .v{font-size:15px}
-  /* 히드레이션 */
-  .hydro-cup{font-size:17px}
-  /* 탭 */
-  .tb{font-size:11px;padding:7px 3px}
-  /* 네비 */
-  .nico{font-size:17px}
-  .nlbl{font-size:9px}
-  /* 배송 모니터링 페이지 스크롤 개선 */
-  #pg-mon .body{padding-bottom:80px}
-  /* 캘린더 */
-  .cal-day{font-size:11px;border-radius:6px}
-  /* 설정 */
-  .srow{padding:6px 0}
-  .sk{font-size:11px}
-  .sv{font-size:12px}
-  /* 토스트 */
-  .toast{font-size:11px;padding:8px 14px;bottom:65px}
-  /* WSI 공식 상세 숨김 (화면 공간 절약) */
-  #pg-mon .body > div:has(#fm-etot){display:none}
-}
-
-/* 세로 모드에서 에너지맵 탭 최적화 */
-@media (max-width:480px) and (orientation:portrait){
-  #pg-map{display:flex;flex-direction:column}
-  #energy-map{flex:1;min-height:200px}
-  #map-detail-sheet{max-height:45vh;overflow-y:auto}
-  /* 요약 칩 스크롤 */
-  #pg-map > div:nth-child(2){overflow-x:auto;-webkit-overflow-scrolling:touch}
 }
 html,body{height:100%;background:var(--bg);font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;color:var(--t1);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
 .page{display:none;min-height:100vh;flex-direction:column}
@@ -315,7 +235,18 @@ button:disabled{opacity:.35!important;cursor:not-allowed!important;pointer-event
 /* PACE BAR */
 .pace-bar-bg{height:6px;background:var(--bg);border-radius:3px;overflow:hidden;margin-top:6px}
 .pace-bar-fill{height:100%;border-radius:3px;background:var(--green);transition:width .5s}
+
+#pg-map{flex-direction:column;height:100vh;overflow:hidden}
+#energy-map{flex:1;min-height:0}
+.gps-chip{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;background:#f3f4f6;color:var(--t2);cursor:pointer}
+.gps-chip.active{background:var(--green-bg);color:var(--green)}
+.map-summary-bar{display:flex;gap:8px;padding:10px 14px;background:var(--surface);border-bottom:1px solid var(--border);overflow-x:auto;-webkit-overflow-scrolling:touch;flex-shrink:0}
+.map-chip{flex-shrink:0;border-radius:8px;padding:6px 10px;text-align:center}
+.mc-v{font-size:14px;font-weight:800}
+.mc-l{font-size:9px;color:var(--t2)}
+#map-detail-sheet{display:none;background:var(--surface);border-radius:16px 16px 0 0;padding:14px 16px 20px;box-shadow:0 -4px 20px rgba(0,0,0,.1);flex-shrink:0;max-height:50vh;overflow-y:auto}
 </style>
+<script src="https://openapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=825xps0pwx"></script>
 </head>
 <body>
 
@@ -351,12 +282,9 @@ button:disabled{opacity:.35!important;cursor:not-allowed!important;pointer-event
       <div class="logo-mk">📦</div>
       <div><div class="logo-txt">과로제로</div><div class="logo-sub" id="hdr-date">—</div></div>
     </div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
-      <div style="display:flex;align-items:center;gap:6px">
-        <div class="sdot" id="hdr-dot"></div>
-        <span class="slbl" id="hdr-lbl">대기중</span>
-      </div>
-      <span class="gps-chip" id="gps-status">📍 GPS 대기</span>
+    <div style="display:flex;align-items:center;gap:6px">
+      <div class="sdot" id="hdr-dot"></div>
+      <span class="slbl" id="hdr-lbl">대기중</span>
     </div>
   </div>
   <div class="body">
@@ -537,7 +465,6 @@ button:disabled{opacity:.35!important;cursor:not-allowed!important;pointer-event
         <div style="font-size:13px;font-weight:600" id="dp-a">배송지를 선택해주세요</div>
         <div style="font-size:12px;color:var(--t2)" id="dp-f">—</div>
       </div>
-      <div class="bldg-energy-card" id="del-energy-info" style="display:none"></div>
       <div class="dpbg"><div class="dpb" id="dpb" style="width:0%"></div></div>
       <div style="display:flex;justify-content:space-between;margin-top:6px">
         <span style="font-size:11px;color:var(--t3)" id="dp-pred">예측: —</span>
@@ -562,19 +489,7 @@ button:disabled{opacity:.35!important;cursor:not-allowed!important;pointer-event
       <div style="margin-top:8px;font-size:11px;color:var(--t3)" id="ibuf">버퍼: 0 / 150</div>
     </div>
 
-    
-    <!-- 미니맵 + GPS -->
-    <div class="map-card">
-      <div style="padding:12px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
-        <div class="clbl" style="margin:0">📍 현재 위치</div>
-        <span class="gps-chip" id="mon-gps-chip">GPS 연결 중...</span>
-      </div>
-      <div id="mini-map"></div>
-      <div style="padding:8px 14px;font-size:10px;color:var(--t3)">
-        🎯 = 현재 배송지 · 파란 점 = 내 위치 · 색상 = 에너지 위험도
-      </div>
-    </div>
-<div id="perm-btn-wrap" style="display:none">
+    <div id="perm-btn-wrap" style="display:none">
       <button class="bcomp" onclick="reqPerm()" style="background:var(--blue);margin-bottom:8px;width:100%">🔐 센서 권한 허용 (iOS)</button>
     </div>
     <div class="brow">
@@ -588,6 +503,7 @@ button:disabled{opacity:.35!important;cursor:not-allowed!important;pointer-event
   </div>
   <div class="bnav">
     <button class="ni" onclick="gp('list')"><span class="nico">📋</span><span class="nlbl">배송목록</span></button>
+    <button class="ni" onclick="gp('map')"><span class="nico">🗺️</span><span class="nlbl">에너지맵</span></button>
     <button class="ni" onclick="gp('cal')"><span class="nico">📅</span><span class="nlbl">기록</span></button>
     <button class="ni" onclick="gp('set')"><span class="nico">⚙️</span><span class="nlbl">설정</span></button>
   </div>
@@ -665,75 +581,53 @@ button:disabled{opacity:.35!important;cursor:not-allowed!important;pointer-event
 </div>
 
 
-<!-- 에너지맵 페이지 -->
-<div id="pg-map" class="page" style="display:none;flex-direction:column;height:100vh;overflow:hidden">
+<div id="pg-map" class="page">
   <div class="hdr" style="flex-shrink:0">
     <div class="hdr-logo">
-      <div class="logo-mk" style="background:#10b981">🗺️</div>
+      <div class="logo-mk" style="background:#10b981">&#x1F5FA;&#xFE0F;</div>
       <div><div class="logo-txt">에너지맵</div><div class="logo-sub">건물별 배송 에너지 예측</div></div>
     </div>
     <div style="display:flex;gap:6px;align-items:center">
-      <span class="gps-chip" id="map-gps-chip" style="font-size:9px;cursor:pointer" onclick="goMapMyLocation()">GPS 대기</span>
+      <span class="gps-chip" id="map-gps-chip" onclick="goMapMyLocation()">GPS 대기</span>
       <button id="map-heat-btn" onclick="toggleMapHeat()" style="background:var(--accent);border:none;border-radius:16px;padding:4px 10px;font-size:11px;font-weight:700;color:#fff;cursor:pointer">히트맵</button>
     </div>
   </div>
-  <!-- 요약 칩 -->
-  <div style="display:flex;gap:8px;padding:10px 14px;background:var(--surface);border-bottom:1px solid var(--border);overflow-x:auto;flex-shrink:0;-webkit-overflow-scrolling:touch">
-    <div style="flex-shrink:0;background:var(--bg);border-radius:8px;padding:6px 10px;text-align:center">
-      <div style="font-size:14px;font-weight:800;color:var(--t1)">29</div>
-      <div style="font-size:9px;color:var(--t2)">총 건물</div>
-    </div>
-    <div style="flex-shrink:0;background:var(--blue-bg);border-radius:8px;padding:6px 10px;text-align:center;min-width:55px">
-      <div id="my-del-count" style="font-size:14px;font-weight:800;color:var(--blue)">0</div>
-      <div style="font-size:9px;color:var(--t2)">내 배송</div>
-    </div>
-    <div style="flex-shrink:0;background:var(--green-bg);border-radius:8px;padding:6px 10px;text-align:center;min-width:55px">
-      <div id="map-done-count" style="font-size:14px;font-weight:800;color:var(--green)">0</div>
-      <div style="font-size:9px;color:var(--t2)">완료</div>
-    </div>
-    <div style="flex-shrink:0;background:var(--orange-bg);border-radius:8px;padding:6px 10px;text-align:center;min-width:55px">
-      <div id="map-energy-total" style="font-size:12px;font-weight:800;color:var(--orange)">—</div>
-      <div style="font-size:9px;color:var(--t2)">누적 kcal</div>
-    </div>
-    <!-- GPS 위치 버튼 -->
-    <button onclick="goMapMyLocation()" style="flex-shrink:0;background:var(--blue);border:none;border-radius:8px;padding:6px 12px;color:#fff;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px">
-      📍 내 위치
-    </button>
+  <div class="map-summary-bar">
+    <div class="map-chip" style="background:var(--bg)"><div class="mc-v">28</div><div class="mc-l">총 건물</div></div>
+    <div class="map-chip" style="background:var(--blue-bg)"><div class="mc-v" id="map-my-del" style="color:var(--blue)">0</div><div class="mc-l">내 배송</div></div>
+    <div class="map-chip" style="background:var(--green-bg)"><div class="mc-v" id="map-done-ct" style="color:var(--green)">0</div><div class="mc-l">완료</div></div>
+    <div class="map-chip" style="background:var(--orange-bg)"><div class="mc-v" id="map-kcal" style="color:var(--orange);font-size:12px">—</div><div class="mc-l">누적 kcal</div></div>
+    <button onclick="goMapMyLocation()" style="flex-shrink:0;background:var(--blue);border:none;border-radius:8px;padding:6px 12px;color:#fff;font-size:11px;font-weight:700;cursor:pointer">&#x1F4CD; 내 위치</button>
   </div>
-  <!-- 지도 -->
-  <div id="energy-map" style="flex:1;min-height:0;position:relative"></div>
-  <!-- 바텀시트: 건물 상세 -->
-  <div id="map-detail-sheet" style="display:none;background:var(--surface);border-top:1px solid var(--border);border-radius:16px 16px 0 0;padding:14px 16px 20px;box-shadow:0 -4px 20px rgba(0,0,0,.1);flex-shrink:0;max-height:50vh;overflow-y:auto">
+  <div id="energy-map"></div>
+  <div id="map-detail-sheet">
     <div style="width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 12px"></div>
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
       <h4 id="mds-name" style="font-size:16px;font-weight:800;flex:1"></h4>
-      <button onclick="document.getElementById('map-detail-sheet').style.display='none'" style="background:none;border:none;font-size:20px;color:var(--t3);cursor:pointer;padding:0">×</button>
-      <span id="mds-risk" class="energy-badge"></span>
+      <button onclick="document.getElementById('map-detail-sheet').style.display='none'" style="background:none;border:none;font-size:20px;color:var(--t3);cursor:pointer">x</button>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
       <div style="background:var(--bg);border-radius:8px;padding:10px;text-align:center">
-        <div id="mds-mean" style="font-size:18px;font-weight:800;font-family:'DM Mono',monospace"></div>
+        <div id="mds-mean" style="font-size:20px;font-weight:900;font-family:monospace"></div>
         <div style="font-size:10px;color:var(--t2)">평균 kcal</div>
       </div>
       <div style="background:var(--bg);border-radius:8px;padding:10px;text-align:center">
-        <div id="mds-range" style="font-size:13px;font-weight:700;font-family:'DM Mono',monospace"></div>
-        <div style="font-size:10px;color:var(--t2)">P10~P90 범위</div>
+        <div id="mds-range" style="font-size:13px;font-weight:700;font-family:monospace"></div>
+        <div style="font-size:10px;color:var(--t2)">P10~P90</div>
       </div>
     </div>
-    <div style="display:flex;gap:8px;font-size:12px">
-      <span style="background:var(--bg);padding:4px 8px;border-radius:6px" id="mds-floor"></span>
-      <span style="background:var(--bg);padding:4px 8px;border-radius:6px" id="mds-elev"></span>
-      <span id="mds-my-del" style="background:var(--blue-bg);color:var(--blue);padding:4px 8px;border-radius:6px;display:none;font-weight:700"></span>
+    <div style="display:flex;gap:8px;font-size:12px;color:var(--t2);margin-bottom:8px">
+      <span id="mds-floor"></span><span id="mds-elev"></span>
     </div>
+    <div id="mds-my-del-info" style="display:none;background:var(--blue-bg);border-radius:8px;padding:10px;font-size:12px;font-weight:700;color:var(--blue)">&#x1F4E6; 내 배송 있음</div>
   </div>
   <div class="bnav">
-    <button class="ni" onclick="gp('list')"><span class="nico">📋</span><span class="nlbl">배송목록</span></button>
-    <button class="ni on" onclick="gp('map')"><span class="nico">🗺️</span><span class="nlbl">에너지맵</span></button>
-    <button class="ni" onclick="gp('cal')"><span class="nico">📅</span><span class="nlbl">기록</span></button>
-    <button class="ni" onclick="gp('set')"><span class="nico">⚙️</span><span class="nlbl">설정</span></button>
+    <button class="ni" onclick="gp('list')"><span class="nico">&#x1F4CB;</span><span class="nlbl">배송목록</span></button>
+    <button class="ni on" onclick="gp('map')"><span class="nico">&#x1F5FA;&#xFE0F;</span><span class="nlbl">에너지맵</span></button>
+    <button class="ni" onclick="gp('cal')"><span class="nico">&#x1F4C5;</span><span class="nlbl">기록</span></button>
+    <button class="ni" onclick="gp('set')"><span class="nico">&#x2699;&#xFE0F;</span><span class="nlbl">설정</span></button>
   </div>
 </div>
-
 <!-- CALENDAR -->
 <div id="pg-cal" class="page">
   <div class="hdr">
@@ -835,200 +729,6 @@ const S = {
   shiftStartTs: null,
   sanjiLog: [],
 };
-
-// ═══════════════════════════════════════════════════════════
-//  건물별 에너지 예측 데이터 (시뮬레이션 기반)
-// ═══════════════════════════════════════════════════════════
-const BLDG_ENERGY = {
-  "용인모현스위첸아파트":{"mean":108.22,"p10":72.25,"p90":142.81,"risk":"HIGH","floor":17,"has_elevator":true},
-  "삼일빌라":{"mean":51.31,"p10":31.44,"p90":72.33,"risk":"HIGH","floor":3,"has_elevator":false},
-  "노블레스빌_31-26":{"mean":47.84,"p10":26.28,"p90":74.03,"risk":"HIGH","floor":4,"has_elevator":false},
-  "어문학관":{"mean":44.56,"p10":29.90,"p90":61.13,"risk":"HIGH","floor":5,"has_elevator":false},
-  "파인빌":{"mean":41.53,"p10":25.06,"p90":60.82,"risk":"HIGH","floor":4,"has_elevator":false},
-  "스위트빌":{"mean":34.89,"p10":18.12,"p90":53.74,"risk":"HIGH","floor":4,"has_elevator":false},
-  "백년관":{"mean":33.30,"p10":27.86,"p90":38.84,"risk":"HIGH","floor":11,"has_elevator":true},
-  "공학관":{"mean":32.79,"p10":15.59,"p90":49.37,"risk":"HIGH","floor":5,"has_elevator":false},
-  "노블레스빌":{"mean":19.35,"p10":8.32,"p90":32.25,"risk":"MEDIUM","floor":4,"has_elevator":false},
-  "프리하임빌":{"mean":19.15,"p10":8.13,"p90":32.04,"risk":"MEDIUM","floor":4,"has_elevator":false},
-  "메르시타운빌":{"mean":19.15,"p10":8.13,"p90":32.04,"risk":"MEDIUM","floor":4,"has_elevator":false},
-  "동양주택":{"mean":17.93,"p10":8.33,"p90":27.81,"risk":"MEDIUM","floor":3,"has_elevator":false},
-  "화전빌라":{"mean":11.37,"p10":1.45,"p90":21.66,"risk":"MEDIUM","floor":4,"has_elevator":false},
-  "자연과학관":{"mean":11.13,"p10":7.62,"p90":14.20,"risk":"MEDIUM","floor":5,"has_elevator":true},
-  "기숙사_C동":{"mean":10.98,"p10":9.27,"p90":12.92,"risk":"MEDIUM","floor":8,"has_elevator":true},
-  "기숙사_E동":{"mean":10.97,"p10":9.39,"p90":12.99,"risk":"MEDIUM","floor":4,"has_elevator":false},
-  "기숙사_A동":{"mean":10.96,"p10":9.29,"p90":12.87,"risk":"MEDIUM","floor":8,"has_elevator":true},
-  "기숙사_D동":{"mean":10.94,"p10":9.14,"p90":12.98,"risk":"MEDIUM","floor":4,"has_elevator":false},
-  "뷰티풀빌":{"mean":10.92,"p10":1.45,"p90":20.74,"risk":"MEDIUM","floor":4,"has_elevator":false},
-  "기숙사_B동":{"mean":10.91,"p10":9.19,"p90":12.95,"risk":"MEDIUM","floor":8,"has_elevator":true},
-  "한일빌라":{"mean":8.84,"p10":1.59,"p90":14.65,"risk":"LOW","floor":4,"has_elevator":false},
-  "이츠빌리지":{"mean":6.17,"p10":1.32,"p90":11.12,"risk":"LOW","floor":3,"has_elevator":false},
-  "성일맨션":{"mean":3.68,"p10":1.28,"p90":7.49,"risk":"LOW","floor":2,"has_elevator":false},
-  "인문경상관":{"mean":3.07,"p10":2.00,"p90":4.16,"risk":"LOW","floor":4,"has_elevator":false},
-  "학생회관":{"mean":3.06,"p10":2.01,"p90":4.13,"risk":"LOW","floor":4,"has_elevator":false},
-  "창업보육센터":{"mean":3.06,"p10":2.02,"p90":4.15,"risk":"LOW","floor":4,"has_elevator":false},
-  "교양관":{"mean":3.04,"p10":2.00,"p90":4.14,"risk":"LOW","floor":5,"has_elevator":true},
-  "후생복지관":{"mean":3.02,"p10":1.99,"p90":4.09,"risk":"LOW","floor":4,"has_elevator":false}
-};
-
-const BLDG_COORDS = {
-  "용인모현스위첸아파트":{lat:37.334639,lng:127.254254,"floor":17,"has_elevator":true},
-  "삼일빌라":{lat:37.334813,lng:127.252709,"floor":3,"has_elevator":false},
-  "노블레스빌_31-26":{lat:37.334563,lng:127.251781,"floor":4,"has_elevator":false},
-  "어문학관":{lat:37.338494,lng:127.273818,"floor":5,"has_elevator":false},
-  "파인빌":{lat:37.336309,lng:127.254254,"floor":4,"has_elevator":false},
-  "스위트빌":{lat:37.334078,lng:127.252726,"floor":4,"has_elevator":false},
-  "백년관":{lat:37.337331,lng:127.265474,"floor":11,"has_elevator":true},
-  "공학관":{lat:37.337721,lng:127.267763,"floor":5,"has_elevator":false},
-  "노블레스빌":{lat:37.337488,lng:127.25329,"floor":4,"has_elevator":false},
-  "프리하임빌":{lat:37.337251,lng:127.253889,"floor":4,"has_elevator":false},
-  "메르시타운빌":{lat:37.337493,lng:127.254086,"floor":4,"has_elevator":false},
-  "동양주택":{lat:37.335226,lng:127.252613,"floor":3,"has_elevator":false},
-  "화전빌라":{lat:37.336594,lng:127.253394,"floor":4,"has_elevator":false},
-  "자연과학관":{lat:37.33888,lng:127.266147,"floor":5,"has_elevator":true},
-  "기숙사_C동":{lat:37.335178,lng:127.263631,"floor":8,"has_elevator":true},
-  "기숙사_E동":{lat:37.333157,lng:127.261437,"floor":4,"has_elevator":false},
-  "기숙사_A동":{lat:37.334453,lng:127.26271,"floor":8,"has_elevator":true},
-  "기숙사_D동":{lat:37.333698,lng:127.262573,"floor":4,"has_elevator":false},
-  "뷰티풀빌":{lat:37.337416,lng:127.254557,"floor":4,"has_elevator":false},
-  "기숙사_B동":{lat:37.33513,lng:127.262692,"floor":8,"has_elevator":true},
-  "한일빌라":{lat:37.335432,lng:127.253437,"floor":4,"has_elevator":false},
-  "이츠빌리지":{lat:37.336842,lng:127.253741,"floor":3,"has_elevator":false},
-  "성일맨션":{lat:37.335236,lng:127.252081,"floor":2,"has_elevator":false},
-  "인문경상관":{lat:37.339748,lng:127.27456,"floor":4,"has_elevator":false},
-  "학생회관":{lat:37.337189,lng:127.269769,"floor":4,"has_elevator":false},
-  "창업보육센터":{lat:37.339062,lng:127.267414,"floor":4,"has_elevator":false},
-  "교양관":{lat:37.33974,lng:127.272058,"floor":5,"has_elevator":true},
-  "후생복지관":{lat:37.337753,lng:127.268621,"floor":4,"has_elevator":false}
-};
-
-// 주소에서 건물명 매칭
-function matchBuilding(addr) {
-  for (const name of Object.keys(BLDG_ENERGY)) {
-    if (addr.includes(name)) return name;
-  }
-  return null;
-}
-
-// ═══════════════════════════════════════════════════════════
-//  GPS 추적
-// ═══════════════════════════════════════════════════════════
-const GPS = {
-  lat: null, lng: null, accuracy: null,
-  watchId: null, map: null, marker: null
-};
-
-function startGPS() {
-  if (!navigator.geolocation) { toast('GPS 지원 안 됨'); return; }
-  GPS.watchId = navigator.geolocation.watchPosition(
-    pos => {
-      GPS.lat = pos.coords.latitude;
-      GPS.lng = pos.coords.longitude;
-      GPS.accuracy = Math.round(pos.coords.accuracy);
-      updGPSUI();
-      updMiniMap();
-      if (S.srvUrl) sendGPSToServer();
-    },
-    err => { console.warn('GPS 오류:', err.message); },
-    { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
-  );
-}
-
-function stopGPS() {
-  if (GPS.watchId !== null) {
-    navigator.geolocation.clearWatch(GPS.watchId);
-    GPS.watchId = null;
-  }
-}
-
-function updGPSUI() {
-  const el = document.getElementById('gps-status');
-  if (!el) return;
-  if (GPS.lat) {
-    el.className = 'gps-chip active';
-    el.textContent = `📍 GPS ${GPS.lat.toFixed(5)}, ${GPS.lng.toFixed(5)} (±${GPS.accuracy}m)`;
-  } else {
-    el.className = 'gps-chip';
-    el.textContent = '📍 GPS 연결 중...';
-  }
-  // 모니터링 페이지 칩도 업데이트
-  if(energyMap&&GPS.lat) addCourierMarker();
-  const monChip = document.getElementById('mon-gps-chip');
-  if (monChip) {
-    monChip.className = GPS.lat ? 'gps-chip active' : 'gps-chip';
-    monChip.textContent = GPS.lat
-      ? `±${GPS.accuracy}m`
-      : 'GPS 연결 중...';
-  }
-}
-
-function updMiniMap() {
-  if (!GPS.lat || !GPS.map) return;
-  const pos = new naver.maps.LatLng(GPS.lat, GPS.lng);
-  GPS.map.setCenter(pos);
-  if (!GPS.marker) {
-    GPS.marker = new naver.maps.Marker({
-      position: pos, map: GPS.map,
-      icon: {
-        content: '<div style="width:14px;height:14px;background:#2563EB;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 4px rgba(37,99,235,.3)"></div>',
-        anchor: new naver.maps.Point(7, 7)
-      }
-    });
-  } else {
-    GPS.marker.setPosition(pos);
-  }
-}
-
-function initMiniMap(containerId) {
-  if (!document.getElementById(containerId)) return;
-  try {
-    const maxKcal = Math.max(...Object.values(BLDG_ENERGY).map(e=>e.mean));
-    GPS.map = new naver.maps.Map(containerId, {
-      center: new naver.maps.LatLng(37.336000, 127.260000),
-      zoom: 16,
-      mapTypeId: naver.maps.MapTypeId.NORMAL,
-      scaleControl: false, logoControl: false,
-      mapDataControl: false, zoomControl: false
-    });
-    // 건물 마커
-    const d = S.aidx !== null ? S.dels[S.aidx] : null;
-    const bldg = d ? matchBuilding(d.addr) : null;
-    Object.entries(BLDG_COORDS).forEach(([name, coord]) => {
-      const en = BLDG_ENERGY[name];
-      if (!en) return;
-      const ratio=en.mean/maxKcal;
-    const col=ratio<0.25?'#22c55e':ratio<0.45?'#84cc16':ratio<0.60?'#f59e0b':ratio<0.75?'#f97316':ratio<0.90?'#ef4444':'#b91c1c';
-      const isTarget = name === bldg;
-      const m = new naver.maps.Marker({
-        position: new naver.maps.LatLng(coord.lat, coord.lng),
-        map: GPS.map,
-        icon: {
-          content: `<div style="background:${isTarget?col:'#fff'};color:${isTarget?'#fff':col};border:2px solid ${col};border-radius:6px;padding:2px 6px;font-size:9px;font-weight:700;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.2)">${name}${isTarget?' 🎯':''}</div>`,
-          anchor: new naver.maps.Point(0, 20)
-        }
-      });
-    });
-    if (GPS.lat) updMiniMap();
-  } catch(e) { console.warn('미니맵 초기화 실패:', e); }
-}
-
-async function sendGPSToServer() {
-  if (!S.srvUrl || !GPS.lat) return;
-  try {
-    await fetch(S.srvUrl + '/gps', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
-      body: JSON.stringify({
-        worker_id: S.user?.id || 'unknown',
-        lat: GPS.lat, lng: GPS.lng, accuracy: GPS.accuracy,
-        ts: new Date().toISOString(),
-        delivery_id: S.aidx !== null ? S.dels[S.aidx]?.id : null,
-        wsi: S.maxWsi
-      }),
-      signal: AbortSignal.timeout(3000)
-    });
-  } catch {}
-}
-
 const aX=[], aY=[], aZ=[], gX=[], gY=[], gZ=[];
 let hz=60, hzSamp=[], lastTs=null, infTimer=null, aHnd=null, sensorOk=false;
 let rmTimerInterval = null, weatherRefreshTimer = null;
@@ -1759,9 +1459,9 @@ function mkDels(){
     {id:'D001',addr:'남동 파크빌라 101호',      floor:1,hasElevator:false,pkgCount:2,pkgWeightKg:3.5, status:'pending',predJ:0,actualJ:0,photoTaken:false},
     {id:'D002',addr:'중부대로 SK뷰 504호',       floor:5,hasElevator:true, pkgCount:1,pkgWeightKg:8.2, status:'pending',predJ:0,actualJ:0,photoTaken:false},
     {id:'D003',addr:'역북동 현대홈타운 302호',   floor:3,hasElevator:false,pkgCount:3,pkgWeightKg:5.0, status:'pending',predJ:0,actualJ:0,photoTaken:false},
-    {id:'D004',addr:'공학관 304호',           floor:1,hasElevator:false,pkgCount:1,pkgWeightKg:25.0,status:'pending',predJ:0,actualJ:0,photoTaken:false},
+    {id:'D004',addr:'남사면 단독주택',           floor:1,hasElevator:false,pkgCount:1,pkgWeightKg:25.0,status:'pending',predJ:0,actualJ:0,photoTaken:false},
     {id:'D005',addr:'김량장동 롯데캐슬 1003호',  floor:10,hasElevator:true,pkgCount:5,pkgWeightKg:4.5, status:'pending',predJ:0,actualJ:0,photoTaken:false},
-    {id:'D006',addr:'백년관 501호',   floor:2,hasElevator:false,pkgCount:4,pkgWeightKg:6.0, status:'pending',predJ:0,actualJ:0,photoTaken:false},
+    {id:'D006',addr:'부발읍 현대아파트 201호',   floor:2,hasElevator:false,pkgCount:4,pkgWeightKg:6.0, status:'pending',predJ:0,actualJ:0,photoTaken:false},
   ];
 }
 
@@ -1802,7 +1502,6 @@ function doLogin(){
   document.getElementById('sun-cond').value=S.sunCondition;
 
   renderList(); gp('list'); toast(`${dels.length}건 배송 로드 완료`);
-  startGPS();
   computeRestSchedule();
   initHydration();
   updEarnCard();
@@ -1833,7 +1532,6 @@ function doLogout(){
   document.getElementById('sanji-fab').style.display='none';
   document.getElementById('hydro-card').style.display='none';
   document.getElementById('earn-card').style.display='none';
-  stopGPS();
   Object.assign(S,{user:null,dels:[],aidx:null,totJ:0,totKc:0,maxWsi:0,shiftSec:0,
     continuousWorkMin:0,continuousMetMin:0,restSchedule:[],weather:null,heatEmergency:false,
     hydrationCups:0,hydrationTimer:0,totalCarriedKg:0,shiftStartTs:null});
@@ -1889,7 +1587,6 @@ function renderList(){
         <span class="dtag">${d.hasElevator?'🛗 엘베':'🪜 계단'}</span>
         <span class="dtag">📦 ${d.pkgWeightKg}kg×${d.pkgCount}</span>
         <span class="denj">예측 ${d.predJ?d.predJ.toFixed(0)+'J':'—'}</span>
-        ${(()=>{const b=matchBuilding(d.addr);const e=b?BLDG_ENERGY[b]:null;return e?`<span class="energy-badge energy-${e.risk}">${e.risk} ${e.mean.toFixed(1)}kcal</span>`:''})()}
         ${d.actualJ>0?`<span class="denj act">실측 ${d.actualJ.toFixed(0)}J</span>`:''}
         ${photoTag}${restTag}${cartBadge}${intBadge}
       </div>
@@ -1965,28 +1662,7 @@ function selDel(i){
   document.getElementById('dpb').style.width='0%';
   document.getElementById('ald').textContent=`📦 ${d.pkgWeightKg}kg×${d.pkgCount}`;
   if(S.weather) updateHeatCards(S.weather);
-  renderList();
-  // 건물 에너지 예측 표시
-  const matchedBldg = matchBuilding(d.addr);
-  const energyInfo = matchedBldg ? BLDG_ENERGY[matchedBldg] : null;
-  const energyEl = document.getElementById('del-energy-info');
-  if (energyEl) {
-    if (energyInfo) {
-      energyEl.style.display = '';
-      energyEl.innerHTML = `<div class="bldg-energy-title">
-        <span class="energy-badge energy-${energyInfo.risk}">${energyInfo.risk}</span>
-        <b>${matchedBldg}</b> 예측 에너지
-      </div>
-      <div class="bldg-energy-row"><span>평균 소비</span><b>${energyInfo.mean.toFixed(1)} kcal</b></div>
-      <div class="bldg-energy-row"><span>P10~P90 범위</span><b>${energyInfo.p10.toFixed(1)}~${energyInfo.p90.toFixed(1)} kcal</b></div>
-      <div class="bldg-energy-row"><span>최고층 / 엘리베이터</span><b>${energyInfo.floor}층 / ${energyInfo.has_elevator?'있음':'없음'}</b></div>
-      <div style="font-size:10px;color:var(--t3);margin-top:4px">N=1,000 시뮬레이션 기반 · MET 모델</div>`;
-    } else {
-      energyEl.style.display = 'none';
-    }
-  }
-  gp('mon');
-  setTimeout(() => initMiniMap('mini-map'), 300);
+  renderList(); gp('mon');
 }
 
 function setBtns(running){
@@ -2296,202 +1972,6 @@ function showCalDetail(rec){
   } else document.getElementById('cd-dlist-card').style.display='none';
 }
 
-
-// ═══════════════════════════════════════════════════════════
-//  에너지맵 (전체 탭)
-// ═══════════════════════════════════════════════════════════
-const BLDG_COORDS_ALL = {
-  "용인모현스위첸아파트":{lat:37.334639,lng:127.254254,"floor":17,"has_elevator":true},
-  "삼일빌라":{lat:37.334813,lng:127.252709,"floor":3,"has_elevator":false},
-  "노블레스빌_31-26":{lat:37.334563,lng:127.251781,"floor":4,"has_elevator":false},
-  "어문학관":{lat:37.338494,lng:127.273818,"floor":5,"has_elevator":false},
-  "파인빌":{lat:37.336309,lng:127.254254,"floor":4,"has_elevator":false},
-  "스위트빌":{lat:37.334078,lng:127.252726,"floor":4,"has_elevator":false},
-  "백년관":{lat:37.337331,lng:127.265474,"floor":11,"has_elevator":true},
-  "공학관":{lat:37.337721,lng:127.267763,"floor":5,"has_elevator":false},
-  "노블레스빌":{lat:37.337488,lng:127.25329,"floor":4,"has_elevator":false},
-  "프리하임빌":{lat:37.337251,lng:127.253889,"floor":4,"has_elevator":false},
-  "메르시타운빌":{lat:37.337493,lng:127.254086,"floor":4,"has_elevator":false},
-  "동양주택":{lat:37.335226,lng:127.252613,"floor":3,"has_elevator":false},
-  "화전빌라":{lat:37.336594,lng:127.253394,"floor":4,"has_elevator":false},
-  "자연과학관":{lat:37.33888,lng:127.266147,"floor":5,"has_elevator":true},
-  "기숙사_C동":{lat:37.335178,lng:127.263631,"floor":8,"has_elevator":true},
-  "기숙사_E동":{lat:37.333157,lng:127.261437,"floor":4,"has_elevator":false},
-  "기숙사_A동":{lat:37.334453,lng:127.26271,"floor":8,"has_elevator":true},
-  "기숙사_D동":{lat:37.333698,lng:127.262573,"floor":4,"has_elevator":false},
-  "뷰티풀빌":{lat:37.337416,lng:127.254557,"floor":4,"has_elevator":false},
-  "기숙사_B동":{lat:37.33513,lng:127.262692,"floor":8,"has_elevator":true},
-  "한일빌라":{lat:37.335432,lng:127.253437,"floor":4,"has_elevator":false},
-  "이츠빌리지":{lat:37.336842,lng:127.253741,"floor":3,"has_elevator":false},
-  "성일맨션":{lat:37.335236,lng:127.252081,"floor":2,"has_elevator":false},
-  "인문경상관":{lat:37.339748,lng:127.27456,"floor":4,"has_elevator":false},
-  "학생회관":{lat:37.337189,lng:127.269769,"floor":4,"has_elevator":false},
-  "창업보육센터":{lat:37.339062,lng:127.267414,"floor":4,"has_elevator":false},
-  "교양관":{lat:37.33974,lng:127.272058,"floor":5,"has_elevator":true},
-  "후생복지관":{lat:37.337753,lng:127.268621,"floor":4,"has_elevator":false}
-};
-
-let energyMap=null, energyHeatCircles=[], energyBubbles=[], energyShowHeat=true;
-let courierPosMarker=null;
-
-function initEnergyMap() {
-  if (energyMap) { energyMap.autoResize(); return; }
-  energyMap = new naver.maps.Map('energy-map', {
-    center: new naver.maps.LatLng(37.336000, 127.260000),
-    zoom: 15, mapTypeId: naver.maps.MapTypeId.NORMAL
-  });
-
-  const maxKcal = Math.max(...Object.values(BLDG_ENERGY).map(e=>e.mean));
-
-  // 히트 원형
-  Object.entries(BLDG_COORDS_ALL).forEach(([name, coord]) => {
-    const en = BLDG_ENERGY[name]; if (!en) return;
-    const op = 0.10+(en.mean/maxKcal)*0.32;
-    const r  = 120+(en.mean/maxKcal)*200;
-    const ratio=en.mean/maxKcal;
-    const col=ratio<0.25?'#22c55e':ratio<0.45?'#84cc16':ratio<0.60?'#f59e0b':ratio<0.75?'#f97316':ratio<0.90?'#ef4444':'#b91c1c';
-    [r, r*0.45].forEach(radius => {
-      const c = new naver.maps.Circle({map:energyMap,center:new naver.maps.LatLng(coord.lat,coord.lng),radius,fillColor:col,fillOpacity:op,strokeWeight:0});
-      energyHeatCircles.push(c);
-    });
-  });
-
-  // 건물 버블 마커
-  Object.entries(BLDG_COORDS_ALL).forEach(([name, coord]) => {
-    const en = BLDG_ENERGY[name]; if (!en) return;
-    const ratio=en.mean/maxKcal;
-    const col=ratio<0.25?'#22c55e':ratio<0.45?'#84cc16':ratio<0.60?'#f59e0b':ratio<0.75?'#f97316':ratio<0.90?'#ef4444':'#b91c1c';
-    // 내 배송 건물인지 확인
-    const myDel = S.dels?.find(d => matchBuilding(d.addr) === name && d.status !== 'done');
-    const isMyDel = !!myDel;
-    const html = `<div style="display:flex;flex-direction:column;align-items:center;transform:translate(-50%,-100%);cursor:pointer">
-      <div style="background:#fff;border:2px solid ${col};border-radius:8px;padding:4px 9px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.15);position:relative${isMyDel?';border-width:3px;box-shadow:0 0 0 3px '+col+'44':''}">
-        <div style="font-size:9px;font-weight:700;color:#555;margin-bottom:1px">${name}${isMyDel?' 📦':''}</div>
-        <div style="font-size:11px;font-weight:700;color:#111;font-family:monospace">${en.p10.toFixed(1)}~${en.p90.toFixed(1)}<span style="color:#888;font-size:9px"> kcal</span></div>
-        <div style="position:absolute;bottom:-7px;left:50%;transform:translateX(-50%);border:4px solid transparent;border-top-color:${col}"></div>
-      </div>
-      <div style="width:7px;height:7px;border-radius:50%;background:${col};margin-top:2px"></div>
-    </div>`;
-    const m = new naver.maps.Marker({
-      position: new naver.maps.LatLng(coord.lat, coord.lng),
-      map: energyMap,
-      icon: {content: html, anchor: new naver.maps.Point(60, 48)}
-    });
-    naver.maps.Event.addListener(m, 'click', () => openMapDetailSheet(name, en, myDel));
-    energyBubbles.push(m);
-  });
-
-  // 내 배송 수 표시
-  updMyDelCount();
-
-  // GPS 마커
-  if (GPS.lat) addCourierMarker();
-}
-
-function addCourierMarker() {
-  if (!energyMap) return;
-  const pos = new naver.maps.LatLng(GPS.lat, GPS.lng);
-  if (!courierPosMarker) {
-    courierPosMarker = new naver.maps.Marker({
-      position: pos, map: energyMap,
-      icon: {
-        content: '<div style="width:16px;height:16px;background:#2563EB;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 4px rgba(37,99,235,.3);"></div>',
-        anchor: new naver.maps.Point(8, 8)
-      }
-    });
-  } else {
-    courierPosMarker.setPosition(pos);
-    courierPosMarker.setMap(energyMap);
-  }
-  // GPS 칩 업데이트
-  const chip = document.getElementById('map-gps-chip');
-  if (chip) { chip.className='gps-chip active'; chip.textContent=`±${GPS.accuracy||'?'}m`; }
-}
-
-function openMapDetailSheet(name, en, myDel) {
-  const maxK=Math.max(...Object.values(BLDG_ENERGY).map(e=>e.mean));const r2=en.mean/maxK;const col=r2<0.25?'#22c55e':r2<0.45?'#84cc16':r2<0.60?'#f59e0b':r2<0.75?'#f97316':r2<0.90?'#ef4444':'#b91c1c';
-  document.getElementById('mds-name').textContent = name;
-  document.getElementById('mds-risk').textContent = en.risk;
-  document.getElementById('mds-risk').className = `energy-badge energy-${en.risk}`;
-  document.getElementById('mds-mean').textContent = en.mean.toFixed(1)+' kcal';
-  document.getElementById('mds-range').textContent = `${en.p10.toFixed(1)} ~ ${en.p90.toFixed(1)}`;
-  document.getElementById('mds-floor').textContent = `${en.floor}층`;
-  document.getElementById('mds-elev').textContent = en.has_elevator ? '🛗 엘리베이터' : '🪜 계단';
-  const myEl = document.getElementById('mds-my-del');
-  if (myDel) { myEl.style.display=''; myEl.textContent=`📦 내 배송 있음`; }
-  else myEl.style.display='none';
-  document.getElementById('map-detail-sheet').style.display = '';
-  // 지도 이동
-  const coord = BLDG_COORDS_ALL[name];
-  if (coord && energyMap) energyMap.setCenter(new naver.maps.LatLng(coord.lat, coord.lng));
-}
-
-function updMyDelCount() {
-  if (!S.dels) return;
-  const pending = S.dels.filter(d => {
-    const b = matchBuilding(d.addr);
-    return b && BLDG_COORDS_ALL[b] && d.status !== 'done';
-  }).length;
-  const done = S.dels.filter(d => d.status === 'done').length;
-  const totalKcal = S.totKc || 0;
-  const el = document.getElementById('my-del-count');
-  const doneEl = document.getElementById('map-done-count');
-  const kcalEl = document.getElementById('map-energy-total');
-  if (el) el.textContent = pending;
-  if (doneEl) doneEl.textContent = done;
-  if (kcalEl) kcalEl.textContent = totalKcal > 0 ? totalKcal.toFixed(1) : '—';
-}
-
-function goMapMyLocation() {
-  if (!energyMap) return;
-  if (!navigator.geolocation) { toast('위치 서비스 지원 안 됨'); return; }
-  const chip = document.getElementById('map-gps-chip');
-  if (chip) { chip.textContent = '위치 찾는 중…'; chip.className = 'gps-chip'; }
-  navigator.geolocation.getCurrentPosition(
-    pos => {
-      const lat = pos.coords.latitude, lng = pos.coords.longitude;
-      const acc = Math.round(pos.coords.accuracy);
-      energyMap.setCenter(new naver.maps.LatLng(lat, lng));
-      energyMap.setZoom(17);
-      if (chip) { chip.textContent = `±${acc}m`; chip.className = 'gps-chip active'; }
-      // 파란 점 마커
-      if (!courierPosMarker) {
-        courierPosMarker = new naver.maps.Marker({
-          position: new naver.maps.LatLng(lat, lng), map: energyMap,
-          icon: { content: `<div style="width:18px;height:18px;background:#2563EB;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 4px rgba(37,99,235,.3);"></div>`, anchor: new naver.maps.Point(9,9) }
-        });
-      } else {
-        courierPosMarker.setPosition(new naver.maps.LatLng(lat, lng));
-        courierPosMarker.setMap(energyMap);
-      }
-      // 정확도 원
-      if (window._gpsAccCircle) window._gpsAccCircle.setMap(null);
-      window._gpsAccCircle = new naver.maps.Circle({
-        map: energyMap, center: new naver.maps.LatLng(lat, lng),
-        radius: acc, fillColor:'#3b82f6', fillOpacity:0.08,
-        strokeColor:'#3b82f6', strokeWeight:1, strokeOpacity:0.3
-      });
-      toast('📍 현재 위치로 이동');
-    },
-    err => {
-      if (chip) { chip.textContent = 'GPS 대기'; chip.className = 'gps-chip'; }
-      if (err.code === 1) toast('위치 권한을 허용해주세요');
-      else toast('위치를 가져올 수 없어요');
-    },
-    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-  );
-}
-  const cnt = S.dels.filter(d => matchBuilding(d.addr) && d.status !== 'done').length;
-  // updMyDelCount handled above
-}
-
-function toggleMapHeat() {
-  energyShowHeat = !energyShowHeat;
-  energyHeatCircles.forEach(c => c.setMap(energyShowHeat ? energyMap : null));
-  const btn = document.getElementById('map-heat-btn');
-  if (btn) { btn.style.background = energyShowHeat ? 'var(--accent)' : 'var(--bg)'; btn.style.color = energyShowHeat ? '#fff' : 'var(--t2)'; }
-}
-
 // ═══════════════════════════════════════════════════════════
 //  NAV
 // ═══════════════════════════════════════════════════════════
@@ -2501,8 +1981,7 @@ function gp(n){
     const el=document.getElementById(id);
     const on=id===PGMAP[n];
     el.classList.toggle('active',on);
-    // pg-map은 flex로 표시 (column 레이아웃)
-    el.style.display = on ? (id==='pg-map'?'flex':'flex') : 'none';
+    el.style.display=on?'flex':'none';
   });
   document.querySelectorAll('.ni').forEach(btn=>{
     const lbl=btn.querySelector('.nlbl')?.textContent;
@@ -2510,7 +1989,7 @@ function gp(n){
     btn.classList.toggle('on',map[lbl]===n);
   });
   if(n==='cal') renderCal();
-  if(n==='map'){setTimeout(()=>{initEnergyMap();if(GPS.lat)addCourierMarker();updMyDelCount();},200);}
+  if(n==='map') setTimeout(()=>initEnergyMap(),150);
 }
 function toast(m){
   const t=document.getElementById('toast');
@@ -2533,6 +2012,173 @@ window.addEventListener('DOMContentLoaded',()=>{
     document.getElementById('perm-btn-wrap').style.display='block';
   setBtns(false);
 });
+const BLDG_ENERGY = {
+  "용인모현스위첸아파트":{"mean":108.22,"p10":72.25,"p90":142.81,"risk":"HIGH","floor":17,"has_elevator":true},
+  "삼일빌라":{"mean":51.31,"p10":31.44,"p90":72.33,"risk":"HIGH","floor":3,"has_elevator":false},
+  "노블레스빌_31-26":{"mean":47.84,"p10":26.28,"p90":74.03,"risk":"HIGH","floor":4,"has_elevator":false},
+  "어문학관":{"mean":44.56,"p10":29.90,"p90":61.13,"risk":"HIGH","floor":5,"has_elevator":false},
+  "파인빌":{"mean":41.53,"p10":25.06,"p90":60.82,"risk":"HIGH","floor":4,"has_elevator":false},
+  "스위트빌":{"mean":34.89,"p10":18.12,"p90":53.74,"risk":"HIGH","floor":4,"has_elevator":false},
+  "백년관":{"mean":33.30,"p10":27.86,"p90":38.84,"risk":"HIGH","floor":11,"has_elevator":true},
+  "공학관":{"mean":32.79,"p10":15.59,"p90":49.37,"risk":"HIGH","floor":5,"has_elevator":false},
+  "노블레스빌":{"mean":19.35,"p10":8.32,"p90":32.25,"risk":"MEDIUM","floor":4,"has_elevator":false},
+  "프리하임빌":{"mean":19.15,"p10":8.13,"p90":32.04,"risk":"MEDIUM","floor":4,"has_elevator":false},
+  "메르시타운빌":{"mean":19.15,"p10":8.13,"p90":32.04,"risk":"MEDIUM","floor":4,"has_elevator":false},
+  "동양주택":{"mean":17.93,"p10":8.33,"p90":27.81,"risk":"MEDIUM","floor":3,"has_elevator":false},
+  "화전빌라":{"mean":11.37,"p10":1.45,"p90":21.66,"risk":"MEDIUM","floor":4,"has_elevator":false},
+  "자연과학관":{"mean":11.13,"p10":7.62,"p90":14.20,"risk":"MEDIUM","floor":5,"has_elevator":true},
+  "기숙사_C동":{"mean":10.98,"p10":9.27,"p90":12.92,"risk":"MEDIUM","floor":8,"has_elevator":true},
+  "기숙사_E동":{"mean":10.97,"p10":9.39,"p90":12.99,"risk":"MEDIUM","floor":4,"has_elevator":false},
+  "기숙사_A동":{"mean":10.96,"p10":9.29,"p90":12.87,"risk":"MEDIUM","floor":8,"has_elevator":true},
+  "기숙사_D동":{"mean":10.94,"p10":9.14,"p90":12.98,"risk":"MEDIUM","floor":4,"has_elevator":false},
+  "뷰티풀빌":{"mean":10.92,"p10":1.45,"p90":20.74,"risk":"MEDIUM","floor":4,"has_elevator":false},
+  "기숙사_B동":{"mean":10.91,"p10":9.19,"p90":12.95,"risk":"MEDIUM","floor":8,"has_elevator":true},
+  "한일빌라":{"mean":8.84,"p10":1.59,"p90":14.65,"risk":"LOW","floor":4,"has_elevator":false},
+  "이츠빌리지":{"mean":6.17,"p10":1.32,"p90":11.12,"risk":"LOW","floor":3,"has_elevator":false},
+  "성일맨션":{"mean":3.68,"p10":1.28,"p90":7.49,"risk":"LOW","floor":2,"has_elevator":false},
+  "인문경상관":{"mean":3.07,"p10":2.00,"p90":4.16,"risk":"LOW","floor":4,"has_elevator":false},
+  "학생회관":{"mean":3.06,"p10":2.01,"p90":4.13,"risk":"LOW","floor":4,"has_elevator":false},
+  "창업보육센터":{"mean":3.06,"p10":2.02,"p90":4.15,"risk":"LOW","floor":4,"has_elevator":false},
+  "교양관":{"mean":3.04,"p10":2.00,"p90":4.14,"risk":"LOW","floor":5,"has_elevator":true},
+  "후생복지관":{"mean":3.02,"p10":1.99,"p90":4.09,"risk":"LOW","floor":4,"has_elevator":false},
+};
+const BLDG_COORDS_ALL = {
+  "용인모현스위첸아파트":{lat:37.334639,lng:127.254254},
+  "삼일빌라":{lat:37.334813,lng:127.252709},
+  "노블레스빌_31-26":{lat:37.334563,lng:127.251781},
+  "어문학관":{lat:37.338494,lng:127.273818},
+  "파인빌":{lat:37.336309,lng:127.254254},
+  "스위트빌":{lat:37.334078,lng:127.252726},
+  "백년관":{lat:37.337331,lng:127.265474},
+  "공학관":{lat:37.337721,lng:127.267763},
+  "노블레스빌":{lat:37.337488,lng:127.25329},
+  "프리하임빌":{lat:37.337251,lng:127.253889},
+  "메르시타운빌":{lat:37.337493,lng:127.254086},
+  "동양주택":{lat:37.335226,lng:127.252613},
+  "화전빌라":{lat:37.336594,lng:127.253394},
+  "자연과학관":{lat:37.33888,lng:127.266147},
+  "기숙사_C동":{lat:37.335178,lng:127.263631},
+  "기숙사_E동":{lat:37.333157,lng:127.261437},
+  "기숙사_A동":{lat:37.334453,lng:127.26271},
+  "기숙사_D동":{lat:37.333698,lng:127.262573},
+  "뷰티풀빌":{lat:37.337416,lng:127.254557},
+  "기숙사_B동":{lat:37.33513,lng:127.262692},
+  "한일빌라":{lat:37.335432,lng:127.253437},
+  "이츠빌리지":{lat:37.336842,lng:127.253741},
+  "성일맨션":{lat:37.335236,lng:127.252081},
+  "인문경상관":{lat:37.339748,lng:127.27456},
+  "학생회관":{lat:37.337189,lng:127.269769},
+  "창업보육센터":{lat:37.339062,lng:127.267414},
+  "교양관":{lat:37.33974,lng:127.272058},
+  "후생복지관":{lat:37.337753,lng:127.268621},
+};
+
+function matchBuilding(addr){
+  for(const name of Object.keys(BLDG_ENERGY)){
+    if(addr.includes(name)) return name;
+  }
+  return null;
+}
+
+let energyMap=null,heatCircles=[],bubbleMks=[],myPosMk=null,showHeat=true;
+
+function eCol(mean,maxK){
+  const r=mean/maxK;
+  if(r<0.25)return'#22c55e';if(r<0.45)return'#84cc16';
+  if(r<0.60)return'#f59e0b';if(r<0.75)return'#f97316';
+  if(r<0.90)return'#ef4444';return'#b91c1c';
+}
+
+function initEnergyMap(){
+  if(energyMap){energyMap.autoResize();updMapStats();return;}
+  energyMap=new naver.maps.Map('energy-map',{
+    center:new naver.maps.LatLng(37.336000,127.260000),
+    zoom:14,mapTypeId:naver.maps.MapTypeId.NORMAL
+  });
+  const maxK=Math.max(...Object.values(BLDG_ENERGY).map(e=>e.mean));
+  Object.entries(BLDG_COORDS_ALL).forEach(([name,coord])=>{
+    const en=BLDG_ENERGY[name]; if(!en) return;
+    const col=eCol(en.mean,maxK);
+    const op=0.10+(en.mean/maxK)*0.32;
+    const r2=80+(en.mean/maxK)*250;
+    [r2,r2*0.4].forEach(radius=>{
+      heatCircles.push(new naver.maps.Circle({map:energyMap,center:new naver.maps.LatLng(coord.lat,coord.lng),radius,fillColor:col,fillOpacity:op,strokeWeight:0}));
+    });
+    const myDel=S.dels&&S.dels.find(d=>matchBuilding(d.addr)===name&&d.status!=='done');
+    const htm=`<div style="transform:translate(-50%,-100%);display:flex;flex-direction:column;align-items:center;cursor:pointer">
+      <div style="background:#fff;border:2px solid ${col};border-radius:8px;padding:4px 9px;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.15);position:relative">
+        <div style="font-size:9px;font-weight:700;color:#555">${name}${myDel?' 📦':''}</div>
+        <div style="font-size:11px;font-weight:700;font-family:monospace">${en.p10.toFixed(1)}~${en.p90.toFixed(1)} kcal</div>
+        <div style="position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);border:3px solid transparent;border-top-color:${col}"></div>
+      </div>
+      <div style="width:6px;height:6px;border-radius:50%;background:${col};margin-top:2px"></div>
+    </div>`;
+    const mk=new naver.maps.Marker({position:new naver.maps.LatLng(coord.lat,coord.lng),map:energyMap,icon:{content:htm,anchor:new naver.maps.Point(55,44)}});
+    naver.maps.Event.addListener(mk,'click',()=>openMapSheet(name,en,myDel,maxK));
+    bubbleMks.push(mk);
+  });
+  updMapStats();
+}
+
+function openMapSheet(name,en,myDel,maxK){
+  const col=eCol(en.mean,maxK||Math.max(...Object.values(BLDG_ENERGY).map(e=>e.mean)));
+  document.getElementById('mds-name').textContent=name;
+  document.getElementById('mds-mean').textContent=en.mean.toFixed(1);
+  document.getElementById('mds-mean').style.color=col;
+  document.getElementById('mds-range').textContent=en.p10.toFixed(1)+' ~ '+en.p90.toFixed(1);
+  document.getElementById('mds-floor').textContent=en.floor+'층';
+  document.getElementById('mds-elev').textContent=en.has_elevator?'🛗 엘리베이터':'🪜 계단';
+  const mi=document.getElementById('mds-my-del-info');
+  if(mi) mi.style.display=myDel?'':'none';
+  document.getElementById('map-detail-sheet').style.display='';
+  const coord=BLDG_COORDS_ALL[name];
+  if(coord&&energyMap) energyMap.setCenter(new naver.maps.LatLng(coord.lat,coord.lng));
+}
+
+function toggleMapHeat(){
+  showHeat=!showHeat;
+  heatCircles.forEach(c=>c.setMap(showHeat?energyMap:null));
+  const btn=document.getElementById('map-heat-btn');
+  if(btn){btn.style.background=showHeat?'var(--accent)':'var(--bg)';btn.style.color=showHeat?'#fff':'var(--t2)';}
+}
+
+function updMapStats(){
+  if(!S||!S.dels) return;
+  const pend=S.dels.filter(d=>matchBuilding(d.addr)&&d.status!=='done').length;
+  const done=S.dels.filter(d=>d.status==='done').length;
+  const kc=S.totKc||0;
+  const e1=document.getElementById('map-my-del');
+  const e2=document.getElementById('map-done-ct');
+  const e3=document.getElementById('map-kcal');
+  if(e1)e1.textContent=pend;
+  if(e2)e2.textContent=done;
+  if(e3)e3.textContent=kc>0?kc.toFixed(1):'—';
+}
+
+function goMapMyLocation(){
+  if(!energyMap||!navigator.geolocation)return;
+  const chip=document.getElementById('map-gps-chip');
+  if(chip)chip.textContent='찾는 중…';
+  navigator.geolocation.getCurrentPosition(
+    pos=>{
+      const lat=pos.coords.latitude,lng=pos.coords.longitude,acc=Math.round(pos.coords.accuracy);
+      energyMap.setCenter(new naver.maps.LatLng(lat,lng));energyMap.setZoom(17);
+      if(chip){chip.textContent='±'+acc+'m';chip.className='gps-chip active';}
+      const htm='<div style="width:16px;height:16px;background:#2563EB;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 4px rgba(37,99,235,.3);transform:translate(-50%,-50%)"></div>';
+      if(!myPosMk){myPosMk=new naver.maps.Marker({position:new naver.maps.LatLng(lat,lng),map:energyMap,icon:{content:htm,anchor:new naver.maps.Point(8,8)}});}
+      else{myPosMk.setPosition(new naver.maps.LatLng(lat,lng));myPosMk.setMap(energyMap);}
+      if(window._ac)window._ac.setMap(null);
+      window._ac=new naver.maps.Circle({map:energyMap,center:new naver.maps.LatLng(lat,lng),radius:acc,fillColor:'#3b82f6',fillOpacity:0.08,strokeColor:'#3b82f6',strokeWeight:1,strokeOpacity:0.3});
+      toast('📍 현재 위치');
+    },
+    err=>{
+      if(chip){chip.textContent='GPS 대기';chip.className='gps-chip';}
+      if(err.code===1)toast('위치 권한을 허용해주세요');
+    },
+    {enableHighAccuracy:true,timeout:10000,maximumAge:0}
+  );
+}
+
 </script>
 </body>
 </html>
