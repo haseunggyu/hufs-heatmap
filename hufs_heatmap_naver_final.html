@@ -103,10 +103,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Noto Sans KR','Segoe UI',sans
       <button class="tbtn on" id="btn-bubble" onclick="toggleBubble()">버블</button>
     </div>
     <div id="legend">
-      <h4>위험 등급</h4>
-      <div class="lrow"><div class="ldot" style="background:#ff4444"></div>HIGH (&gt;25 kcal)</div>
-      <div class="lrow"><div class="ldot" style="background:#ff8800"></div>MEDIUM (9.5~25)</div>
-      <div class="lrow"><div class="ldot" style="background:#03c75a"></div>LOW (&lt;9.5 kcal)</div>
+      <h4>에너지 강도</h4>
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+        <div style="width:80px;height:10px;border-radius:5px;background:linear-gradient(to right,#22c55e,#84cc16,#f59e0b,#f97316,#ef4444,#b91c1c)"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:#888;width:80px">
+        <span>낮음</span><span>높음</span>
+      </div>
     </div>
     <div id="detail">
       <button id="dc" onclick="closeDetail()">×</button>
@@ -159,8 +162,185 @@ const DATA=[
 ];
 
 const MODE_KR={storage:"보관소 집중",floor_delivery:"층별 직접배송",mixed:"혼합"};
-const RCOL={HIGH:"#ff4444",MEDIUM:"#ff8800",LOW:"#03c75a"};
 const maxKcal=Math.max(...DATA.map(d=>d.mean_kcal));
+
+// 에너지값 기반 그라데이션 색상 (LOW=초록 → HIGH=진빨)
+function eColor(kcal){
+  const r=Math.min(kcal/maxKcal,1);
+  if(r<0.25) return '#22c55e';       // 초록
+  if(r<0.45) return '#84cc16';       // 연두
+  if(r<0.60) return '#f59e0b';       // 노랑
+  if(r<0.75) return '#f97316';       // 주황
+  if(r<0.90) return '#ef4444';       // 빨강
+  return '#b91c1c';                   // 진빨강
+}
+
+// 버블 박스 border 색상 (배경은 흰색 유지)
+function eBoxStyle(kcal){
+  return `background:#fff;border:2px solid ${eColor(kcal)};box-shadow:0 2px 8px ${eColor(kcal)}44`;
+}
+
+function toggleSidebar(){
+  const sb=document.getElementById('sidebar');
+  const btn=document.getElementById('mob-toggle');
+  const isOpen=sb.classList.toggle('open');
+  btn.textContent=isOpen?'✕ 닫기':'📊 랭킹 보기';
+}
+// 지도 클릭 시 사이드바 닫기
+const map=new naver.maps.Map('map',{
+  center:new naver.maps.LatLng(37.336000,127.260000),
+  zoom:15,
+  mapTypeId:naver.maps.MapTypeId.NORMAL
+});
+
+// 히트맵 원형 오버레이 (에너지 그라데이션)
+let showHeat=true, showBubble=true;
+const heatCircles=[];
+DATA.forEach(d=>{
+  const col=eColor(d.mean_kcal);
+  const op=0.10+(d.mean_kcal/maxKcal)*0.32;
+  const r=80+(d.mean_kcal/maxKcal)*250;
+  [r, r*0.45].forEach(radius=>{
+    const c=new naver.maps.Circle({map,center:new naver.maps.LatLng(d.lat,d.lng),radius,fillColor:col,fillOpacity:op,strokeWeight:0});
+    heatCircles.push(c);
+  });
+});
+
+// 지역 집계 마커 (줌아웃) — 에너지 그라데이션
+const REGIONS=[
+  {name:"기숙사 단지",keys:["기숙사_A동","기숙사_B동","기숙사_C동","기숙사_D동","기숙사_E동"],lat:37.334300,lng:127.262600},
+  {name:"학술 구역",keys:["백년관","공학관","자연과학관","학생회관","후생복지관","창업보육센터"],lat:37.337800,lng:127.267500},
+  {name:"인문/어문",keys:["어문학관","교양관","인문경상관"],lat:37.339200,lng:127.273100},
+  {name:"주거지역",keys:["용인모현스위첸아파트","화전빌라","삼일빌라","노블레스빌_31-26","파인빌","스위트빌","노블레스빌","프리하임빌","메르시타운빌","동양주택","뷰티풀빌","한일빌라","이츠빌리지","성일맨션"],lat:37.336000,lng:127.253500}
+];
+const regionMarkers=[];
+REGIONS.forEach(r=>{
+  const items=DATA.filter(d=>r.keys.includes(d.building));
+  const total=items.reduce((s,d)=>s+d.mean_kcal,0);
+  const col=eColor(total/items.length);
+  const html=`<div style="display:flex;flex-direction:column;align-items:center;cursor:pointer;transform:translate(-50%,-50%)">
+    <div style="width:72px;height:72px;border-radius:50%;background:${col};opacity:.88;border:3px solid #fff;box-shadow:0 2px 14px ${col}66;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center">
+      <div style="font-size:9px;font-weight:700;color:#fff;line-height:1.3">${r.name}</div>
+      <div style="font-size:13px;font-weight:900;color:#fff">${total.toFixed(0)}</div>
+      <div style="font-size:9px;color:rgba(255,255,255,.85)">kcal 합계</div>
+    </div>
+  </div>`;
+  const m=new naver.maps.Marker({
+    position:new naver.maps.LatLng(r.lat,r.lng),
+    icon:{content:html,anchor:new naver.maps.Point(36,36)}
+  });
+  naver.maps.Event.addListener(m,'click',()=>{map.setCenter(new naver.maps.LatLng(r.lat,r.lng));map.setZoom(16);});
+  regionMarkers.push(m);
+});
+
+// 건물 버블 마커 (에너지 그라데이션)
+const bubbleMarkers=[];
+DATA.forEach((d,i)=>{
+  const col=eColor(d.mean_kcal);
+  const arrowStyle=`position:absolute;bottom:-7px;left:50%;transform:translateX(-50%);border:4px solid transparent;border-top-color:${col}`;
+  const html=`<div style="display:flex;flex-direction:column;align-items:center;cursor:pointer;transform:translate(-50%,-100%)">
+    <div style="${eBoxStyle(d.mean_kcal)};border-radius:8px;padding:4px 9px;white-space:nowrap;position:relative">
+      <div style="font-size:9px;font-weight:700;color:#555;margin-bottom:1px">${d.building}</div>
+      <div style="font-size:11px;font-weight:700;color:#111;font-family:monospace">${d.p10_kcal.toFixed(1)}<span style="color:#888;font-size:9px">~</span>${d.p90_kcal.toFixed(1)}<span style="color:#888;font-size:9px"> kcal</span></div>
+      <div style="${arrowStyle}"></div>
+    </div>
+    <div style="width:7px;height:7px;border-radius:50%;background:${col};margin-top:2px"></div>
+  </div>`;
+  const m=new naver.maps.Marker({
+    position:new naver.maps.LatLng(d.lat,d.lng),
+    map,
+    icon:{content:html,anchor:new naver.maps.Point(55,48)}
+  });
+  naver.maps.Event.addListener(m,'click',()=>openDetail(d,i));
+  bubbleMarkers.push(m);
+});
+
+// 줌 레벨 연동
+const ZOOM_TH=15;
+function updateZoom(){
+  const z=map.getZoom();
+  const badge=document.getElementById('zoom-badge');
+  if(z<ZOOM_TH){
+    bubbleMarkers.forEach(m=>m.setMap(null));
+    regionMarkers.forEach(m=>m.setMap(map));
+    badge.textContent='🏘️ 지역별 에너지 합산';
+    badge.className='zoom-badge region';
+  } else {
+    bubbleMarkers.forEach(m=>m.setMap(showBubble?map:null));
+    regionMarkers.forEach(m=>m.setMap(null));
+    badge.textContent='🏢 건물별 예측 에너지';
+    badge.className='zoom-badge building';
+  }
+}
+naver.maps.Event.addListener(map,'click',function(){
+  const sb=document.getElementById('sidebar');
+  if(sb.classList.contains('open')){
+    sb.classList.remove('open');
+    document.getElementById('mob-toggle').textContent='📊 랭킹 보기';
+  }
+});
+naver.maps.Event.addListener(map,'zoom_changed',updateZoom);
+updateZoom();
+
+function toggleHeat(){
+  showHeat=!showHeat;
+  heatCircles.forEach(c=>c.setMap(showHeat?map:null));
+  document.getElementById('btn-heat').classList.toggle('on',showHeat);
+}
+function toggleBubble(){
+  showBubble=!showBubble;
+  if(map.getZoom()>=ZOOM_TH) bubbleMarkers.forEach(m=>m.setMap(showBubble?map:null));
+  document.getElementById('btn-bubble').classList.toggle('on',showBubble);
+}
+
+function openDetail(d,i){
+  const col=eColor(d.mean_kcal);
+  document.getElementById('dn').textContent=d.building;
+  document.getElementById('dm').textContent=MODE_KR[d.delivery_mode];
+  document.getElementById('d-mean').textContent=d.mean_kcal.toFixed(1);
+  document.getElementById('d-risk').innerHTML=`<span style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:${col}22;color:${col}">${d.mean_kcal.toFixed(1)} kcal</span>`;
+  document.getElementById('d-bar').style.cssText=`width:${(d.mean_kcal/maxKcal*100).toFixed(0)}%;background:${col};opacity:.85;`;
+  document.getElementById('d-p10').textContent=d.p10_kcal.toFixed(1)+' kcal (P10)';
+  document.getElementById('d-p90').textContent=d.p90_kcal.toFixed(1)+' kcal (P90)';
+  document.getElementById('d-floor').textContent=d.max_floor+'층';
+  document.getElementById('d-elev').textContent=d.has_elevator?'있음 🛗':'없음';
+  document.getElementById('d-dm').textContent=MODE_KR[d.delivery_mode];
+  document.getElementById('d-range').textContent=`${d.p10_kcal.toFixed(1)} ~ ${d.p90_kcal.toFixed(1)} kcal`;
+  document.getElementById('detail').style.display='block';
+  document.querySelectorAll('.rank-item').forEach(el=>el.classList.remove('active'));
+  const t=document.querySelector(`.rank-item[data-i="${i}"]`);
+  if(t){t.classList.add('active');t.scrollIntoView({block:'nearest',behavior:'smooth'});}
+}
+function closeDetail(){
+  document.getElementById('detail').style.display='none';
+  document.querySelectorAll('.rank-item').forEach(el=>el.classList.remove('active'));
+}
+
+// 랭킹 패널 (에너지 그라데이션)
+const list=document.getElementById('ranking-list');
+DATA.forEach((d,i)=>{
+  const nc=i===0?'r1':i===1?'r2':i===2?'r3':'';
+  const col=eColor(d.mean_kcal);
+  const el=document.createElement('div');
+  el.className='rank-item'; el.dataset.i=i;
+  el.innerHTML=`
+    <div class="rank-num ${nc}">${i+1}</div>
+    <div class="rdot" style="background:${col}"></div>
+    <div class="rinfo"><div class="rname">${d.building}</div><div class="rsub">${MODE_KR[d.delivery_mode]} · ${d.max_floor}층</div></div>
+    <div class="rright">
+      <div class="rkcal" style="color:${col}">${d.mean_kcal.toFixed(1)} kcal</div>
+      <div class="rrange">${d.p10_kcal.toFixed(1)}~${d.p90_kcal.toFixed(1)}</div>
+    </div>`;
+  el.addEventListener('click',()=>{
+    map.setCenter(new naver.maps.LatLng(d.lat,d.lng));
+    map.setZoom(17);
+    setTimeout(()=>openDetail(d,i),200);
+  });
+  list.appendChild(el);
+});
+</script>
+</body>
+</html>
 
 function toggleSidebar(){
   const sb=document.getElementById('sidebar');
