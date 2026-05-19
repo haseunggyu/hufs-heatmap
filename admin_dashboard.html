@@ -78,6 +78,99 @@ function renderDetail(){const d=drivers.find(x=>x.id===selectedDriverId)||driver
 function renderAlerts(){const a=[];drivers.forEach(d=>{const r=riskOf(d.maxWsi);if(r.key==='danger')a.push(`<div class="alert red">🚨 ${d.name}(${d.id}) WSI ${d.maxWsi.toFixed(2)} — 위험 수준입니다. 즉시 휴식 또는 작업 중단 검토가 필요합니다.</div>`);else if(r.key==='warning')a.push(`<div class="alert orange">🔔 ${d.name}(${d.id}) WSI ${d.maxWsi.toFixed(2)} — 경고 수준입니다. 휴식 권장.</div>`);else if(r.key==='caution')a.push(`<div class="alert yellow">⚠️ ${d.name}(${d.id}) WSI ${d.maxWsi.toFixed(2)} — 주의 수준입니다.</div>`);d.deliveries.forEach(x=>{if(x.actualJ>0&&x.actualJ/x.predJ>=1.2)a.push(`<div class="alert yellow">📈 ${d.name}(${d.id}) ${x.addr}: 실측 에너지가 예측보다 ${Math.round((x.actualJ/x.predJ-1)*100)}% 높습니다.</div>`)})});document.getElementById("alertList").innerHTML=a.join("")||`<div class="alert yellow">현재 표시할 위험 알림이 없습니다.</div>`}
 function selectDriver(id){selectedDriverId=id;renderAll()}function showPanel(name,btn){["overview","drivers","heatmap","alerts"].forEach(p=>document.getElementById("panel-"+p).classList.toggle("hidden",p!==name));if(btn){document.querySelectorAll(".nav button").forEach(b=>b.classList.remove("active"));btn.classList.add("active")}else{const labels={overview:"통합 현황",drivers:"배송기사 관리",heatmap:"에너지 Heatmap",alerts:"위험 알림"};document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.textContent.includes(labels[name])))} }
 function refreshMock(){renderAll()}function simulateTick(){drivers=drivers.map(d=>{if(d.status!=="배송중")return d;const add=Math.floor(Math.random()*1800+400),wsiAdd=Math.random()*.035;const active=d.deliveries.find(x=>x.status==="active");if(active)active.actualJ+=add;return{...d,cumulativeEnergyJ:d.cumulativeEnergyJ+add,totalKcal:(d.cumulativeEnergyJ+add)/4184,maxWsi:Math.min(1.35,d.maxWsi+wsiAdd)}});renderAll()}renderAll();
+const BLDG_DATA = [
+  {name:"용인모현스위첸아파트",lat:37.334639,lng:127.254254,mean:91.717,p10:74.148,p90:109.796,floor:17,elev:true},
+  {name:"어문학관",lat:37.338494,lng:127.273818,mean:44.561,p10:29.901,p90:61.129,floor:5,elev:false},
+  {name:"삼일빌라",lat:37.334813,lng:127.252709,mean:34.419,p10:22.241,p90:47.85,floor:3,elev:false},
+  {name:"백년관",lat:37.337331,lng:127.265474,mean:33.303,p10:27.863,p90:38.843,floor:11,elev:true},
+  {name:"공학관",lat:37.337721,lng:127.267763,mean:32.789,p10:15.589,p90:49.374,floor:5,elev:false},
+  {name:"노블레스빌_31-26",lat:37.334563,lng:127.251781,mean:32.445,p10:22.135,p90:42.894,floor:4,elev:false},
+  {name:"파인빌",lat:37.336309,lng:127.254254,mean:29.856,p10:19.565,p90:40.971,floor:4,elev:false},
+  {name:"스위트빌",lat:37.334078,lng:127.252726,mean:26.733,p10:15.69,p90:37.109,floor:4,elev:false},
+  {name:"프리하임빌",lat:37.337251,lng:127.253889,mean:17.661,p10:9.299,p90:25.782,floor:4,elev:false},
+  {name:"메르시타운빌",lat:37.337493,lng:127.254086,mean:17.478,p10:7.032,p90:25.76,floor:4,elev:false},
+  {name:"노블레스빌",lat:37.337488,lng:127.25329,mean:17.263,p10:7.125,p90:25.724,floor:4,elev:false},
+  {name:"동양주택",lat:37.335226,lng:127.252613,mean:14.888,p10:7.583,p90:21.609,floor:3,elev:false},
+  {name:"화전빌라",lat:37.336594,lng:127.253394,mean:11.922,p10:2.733,p90:20.868,floor:4,elev:false},
+  {name:"뷰티풀빌",lat:37.337416,lng:127.254557,mean:11.873,p10:2.859,p90:20.46,floor:4,elev:false},
+  {name:"자연과학관",lat:37.33888,lng:127.266147,mean:11.133,p10:7.615,p90:14.202,floor:5,elev:true},
+  {name:"기숙사_C동",lat:37.335178,lng:127.263631,mean:10.978,p10:9.265,p90:12.918,floor:8,elev:true},
+  {name:"기숙사_E동",lat:37.333157,lng:127.261437,mean:10.973,p10:9.387,p90:12.989,floor:4,elev:false},
+  {name:"기숙사_A동",lat:37.334453,lng:127.26271,mean:10.956,p10:9.285,p90:12.867,floor:8,elev:true},
+  {name:"기숙사_D동",lat:37.333698,lng:127.262573,mean:10.94,p10:9.136,p90:12.976,floor:4,elev:false},
+  {name:"기숙사_B동",lat:37.33513,lng:127.262692,mean:10.907,p10:9.192,p90:12.948,floor:8,elev:true},
+  {name:"한일빌라",lat:37.335432,lng:127.253437,mean:9.911,p10:2.732,p90:17.032,floor:4,elev:false},
+  {name:"이츠빌리지",lat:37.336842,lng:127.253741,mean:7.198,p10:2.469,p90:13.03,floor:3,elev:false},
+  {name:"성일맨션",lat:37.335236,lng:127.252081,mean:4.697,p10:2.369,p90:6.717,floor:2,elev:false},
+  {name:"인문경상관",lat:37.339748,lng:127.27456,mean:3.073,p10:2.005,p90:4.159,floor:4,elev:false},
+  {name:"창업보육센터",lat:37.339062,lng:127.267414,mean:3.055,p10:2.02,p90:4.149,floor:4,elev:false},
+  {name:"학생회관",lat:37.337189,lng:127.269769,mean:3.055,p10:2.013,p90:4.131,floor:4,elev:false},
+  {name:"교양관",lat:37.33974,lng:127.272058,mean:3.038,p10:2.002,p90:4.14,floor:5,elev:true},
+  {name:"후생복지관",lat:37.337753,lng:127.268621,mean:3.018,p10:1.99,p90:4.095,floor:4,elev:false},
+];
+const COURIER_LOCS=[
+  {id:"CJ-28471",name:"김민준",lat:37.338600,lng:127.273500,wsi:0.91,activity:"계단 오르기"},
+  {id:"CJ-19382",name:"박서준",lat:37.337800,lng:127.269000,wsi:0.62,activity:"대기"},
+  {id:"CJ-38291",name:"이도윤",lat:37.334100,lng:127.263000,wsi:1.08,activity:"평지 걷기"},
+  {id:"CJ-74820",name:"최하준",lat:37.335500,lng:127.265000,wsi:1.24,activity:"엘리베이터"},
+];
+let admMap=null,admHeat=[],admBubbles=[],admCouriers=[],admMyMk=null,admShowHeat=true;
+function eColAdm(mean,maxK){
+  const r=mean/maxK;
+  if(r<0.25)return'#22c55e';if(r<0.45)return'#84cc16';
+  if(r<0.60)return'#f59e0b';if(r<0.75)return'#f97316';
+  if(r<0.90)return'#ef4444';return'#b91c1c';
+}
+function initAdmMap(){
+  if(admMap){admMap.autoResize();return;}
+  admMap=new naver.maps.Map('admin-map',{center:new naver.maps.LatLng(37.336,127.260),zoom:14,mapTypeId:naver.maps.MapTypeId.NORMAL});
+  const maxK=Math.max(...BLDG_DATA.map(d=>d.mean));
+  BLDG_DATA.forEach(d=>{
+    const col=eColAdm(d.mean,maxK),op=0.10+(d.mean/maxK)*0.30,r=80+(d.mean/maxK)*250;
+    [r,r*0.4].forEach(radius=>admHeat.push(new naver.maps.Circle({map:admMap,center:new naver.maps.LatLng(d.lat,d.lng),radius,fillColor:col,fillOpacity:op,strokeWeight:0})));
+    const htm=`<div style="transform:translate(-50%,-100%);display:flex;flex-direction:column;align-items:center;cursor:pointer"><div style="background:#fff;border:2px solid ${col};border-radius:7px;padding:3px 8px;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.15);position:relative"><div style="font-size:8px;font-weight:700;color:#555">${d.name}</div><div style="font-size:10px;font-weight:800;font-family:monospace">${d.mean.toFixed(1)} kcal</div><div style="position:absolute;bottom:-5px;left:50%;transform:translateX(-50%);border:3px solid transparent;border-top-color:${col}"></div></div><div style="width:5px;height:5px;border-radius:50%;background:${col};margin-top:2px"></div></div>`;
+    const mk=new naver.maps.Marker({position:new naver.maps.LatLng(d.lat,d.lng),map:admMap,icon:{content:htm,anchor:new naver.maps.Point(50,42)}});
+    naver.maps.Event.addListener(mk,'click',()=>showAdmPopup(d,col));
+    admBubbles.push(mk);
+  });
+  COURIER_LOCS.forEach(cv=>{
+    const rc=cv.wsi>=1.2?'#ef4444':cv.wsi>=1.0?'#f97316':cv.wsi>=0.8?'#f59e0b':'#10b981';
+    const htm=`<div style="transform:translate(-50%,-50%);cursor:pointer"><div style="width:32px;height:32px;border-radius:50%;background:${rc};border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#fff">${cv.name[0]}</div><div style="background:#111;color:#fff;border-radius:4px;padding:2px 5px;font-size:9px;font-weight:700;white-space:nowrap;margin-top:2px;text-align:center">${cv.name}</div></div>`;
+    const mk=new naver.maps.Marker({position:new naver.maps.LatLng(cv.lat,cv.lng),map:admMap,icon:{content:htm,anchor:new naver.maps.Point(16,16)}});
+    naver.maps.Event.addListener(mk,'click',()=>{selectDriver(cv.id);showPanel('overview');});
+    admCouriers.push(mk);
+  });
+}
+function showAdmPopup(d,col){
+  const p=document.getElementById('adm-popup');p.style.display='block';
+  p.innerHTML=`<button onclick="this.parentElement.style.display='none'" style="position:absolute;top:6px;right:10px;background:none;border:none;font-size:16px;cursor:pointer;color:#999">x</button><div style="font-size:14px;font-weight:800;margin-bottom:8px">${d.name}</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><div style="background:#f9f9f9;border-radius:8px;padding:8px;text-align:center"><div style="font-size:18px;font-weight:900;color:${col}">${d.mean.toFixed(1)}</div><div style="font-size:10px;color:#888">평균 kcal</div></div><div style="background:#f9f9f9;border-radius:8px;padding:8px;text-align:center"><div style="font-size:12px;font-weight:700">${d.p10.toFixed(1)}~${d.p90.toFixed(1)}</div><div style="font-size:10px;color:#888">P10~P90</div></div></div><div style="margin-top:8px;font-size:11px;color:#666">${d.floor}층 · ${d.elev?'🛗 엘리베이터':'🪜 계단'}</div>`;
+}
+function toggleAdmHeat(){
+  admShowHeat=!admShowHeat;admHeat.forEach(c=>c.setMap(admShowHeat?admMap:null));
+  const btn=document.getElementById('adm-heat-btn');
+  if(btn){btn.style.background=admShowHeat?'var(--accent)':'var(--surface)';btn.style.color=admShowHeat?'#fff':'var(--t1)';}
+}
+function switchAdmLayer(val){
+  if(val==='courier'){admBubbles.forEach(m=>m.setMap(null));admHeat.forEach(c=>c.setMap(null));admCouriers.forEach(m=>m.setMap(admMap));}
+  else{admBubbles.forEach(m=>m.setMap(admMap));if(admShowHeat)admHeat.forEach(c=>c.setMap(admMap));admCouriers.forEach(m=>m.setMap(admMap));}
+}
+function goAdmGPS(){
+  if(!admMap||!navigator.geolocation)return;
+  const chip=document.getElementById('adm-gps-chip');if(chip)chip.textContent='찾는 중…';
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const lat=pos.coords.latitude,lng=pos.coords.longitude,acc=Math.round(pos.coords.accuracy);
+    admMap.setCenter(new naver.maps.LatLng(lat,lng));admMap.setZoom(16);
+    if(chip){chip.textContent='±'+acc+'m';chip.style.color='var(--blue)';}
+    if(!admMyMk){admMyMk=new naver.maps.Marker({position:new naver.maps.LatLng(lat,lng),map:admMap,icon:{content:'<div style="width:14px;height:14px;background:var(--accent);border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 3px rgba(245,158,11,.3)"></div>',anchor:new naver.maps.Point(7,7)}});}
+    else{admMyMk.setPosition(new naver.maps.LatLng(lat,lng));}
+  },err=>{if(chip){chip.textContent='GPS 대기';chip.style.color='';}});
+}
+const _origShowPanel=showPanel;
+window.showPanel=function(name,btn){
+  _origShowPanel(name,btn);
+  if(name==='heatmap')setTimeout(()=>initAdmMap(),100);
+};
+
 
 // ═══════════════════════════════════════════════════════════
 //  ADMIN 히트맵

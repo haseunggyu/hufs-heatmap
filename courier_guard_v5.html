@@ -245,7 +245,18 @@ button:disabled{opacity:.35!important;cursor:not-allowed!important;pointer-event
 .mc-v{font-size:14px;font-weight:800}
 .mc-l{font-size:9px;color:var(--t2)}
 #map-detail-sheet{display:none;background:var(--surface);border-radius:16px 16px 0 0;padding:14px 16px 20px;box-shadow:0 -4px 20px rgba(0,0,0,.1);flex-shrink:0;max-height:50vh;overflow-y:auto}
+
+#pg-map{flex-direction:column;height:100vh;overflow:hidden}
+#energy-map{flex:1;min-height:0}
+.gps-chip{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;background:#f3f4f6;color:var(--t2);cursor:pointer}
+.gps-chip.active{background:var(--green-bg);color:var(--green)}
+.map-sumbar{display:flex;gap:8px;padding:10px 14px;background:var(--surface);border-bottom:1px solid var(--border);overflow-x:auto;-webkit-overflow-scrolling:touch;flex-shrink:0}
+.mchip{flex-shrink:0;border-radius:8px;padding:6px 10px;text-align:center}
+.mchip .mv{font-size:14px;font-weight:800}
+.mchip .ml{font-size:9px;color:var(--t2)}
+#map-sheet{display:none;background:var(--surface);border-radius:16px 16px 0 0;padding:14px 16px 20px;box-shadow:0 -4px 20px rgba(0,0,0,.1);flex-shrink:0;max-height:50vh;overflow-y:auto}
 </style>
+<script src="https://openapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=825xps0pwx"></script>
 <script src="https://openapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=825xps0pwx"></script>
 </head>
 <body>
@@ -379,6 +390,7 @@ button:disabled{opacity:.35!important;cursor:not-allowed!important;pointer-event
   <div class="bnav">
     <button class="ni on" onclick="gp('list')"><span class="nico">📋</span><span class="nlbl">배송목록</span></button>
     <button class="ni" onclick="gp('map')"><span class="nico">🗺️</span><span class="nlbl">에너지맵</span></button>
+    <button class="ni" onclick="gp('map')"><span class="nico">🗺️</span><span class="nlbl">에너지맵</span></button>
     <button class="ni" onclick="gp('cal')"><span class="nico">📅</span><span class="nlbl">기록</span></button>
     <button class="ni" onclick="gp('set')"><span class="nico">⚙️</span><span class="nlbl">설정</span></button>
   </div>
@@ -504,6 +516,7 @@ button:disabled{opacity:.35!important;cursor:not-allowed!important;pointer-event
   <div class="bnav">
     <button class="ni" onclick="gp('list')"><span class="nico">📋</span><span class="nlbl">배송목록</span></button>
     <button class="ni" onclick="gp('map')"><span class="nico">🗺️</span><span class="nlbl">에너지맵</span></button>
+    <button class="ni" onclick="gp('map')"><span class="nico">🗺️</span><span class="nlbl">에너지맵</span></button>
     <button class="ni" onclick="gp('cal')"><span class="nico">📅</span><span class="nlbl">기록</span></button>
     <button class="ni" onclick="gp('set')"><span class="nico">⚙️</span><span class="nlbl">설정</span></button>
   </div>
@@ -626,6 +639,54 @@ button:disabled{opacity:.35!important;cursor:not-allowed!important;pointer-event
     <button class="ni on" onclick="gp('map')"><span class="nico">&#x1F5FA;&#xFE0F;</span><span class="nlbl">에너지맵</span></button>
     <button class="ni" onclick="gp('cal')"><span class="nico">&#x1F4C5;</span><span class="nlbl">기록</span></button>
     <button class="ni" onclick="gp('set')"><span class="nico">&#x2699;&#xFE0F;</span><span class="nlbl">설정</span></button>
+  </div>
+</div>
+
+<div id="pg-map" class="page">
+  <div class="hdr" style="flex-shrink:0">
+    <div class="hdr-logo">
+      <div class="logo-mk" style="background:#10b981">&#x1F5FA;</div>
+      <div><div class="logo-txt">에너지맵</div><div class="logo-sub">N=1,000 Monte Carlo</div></div>
+    </div>
+    <div style="display:flex;gap:6px;align-items:center">
+      <span class="gps-chip" id="map-gps-chip" onclick="goMapGPS()">GPS 대기</span>
+      <button onclick="toggleMapHeat()" id="map-heat-btn" style="background:var(--accent);border:none;border-radius:16px;padding:4px 10px;font-size:11px;font-weight:700;color:#fff;cursor:pointer">히트맵</button>
+    </div>
+  </div>
+  <div class="map-sumbar">
+    <div class="mchip" style="background:var(--bg)"><div class="mv">28</div><div class="ml">건물</div></div>
+    <div class="mchip" style="background:var(--blue-bg)"><div class="mv" id="mp-del" style="color:var(--blue)">0</div><div class="ml">내 배송</div></div>
+    <div class="mchip" style="background:var(--green-bg)"><div class="mv" id="mp-done" style="color:var(--green)">0</div><div class="ml">완료</div></div>
+    <div class="mchip" style="background:var(--orange-bg)"><div class="mv" id="mp-kcal" style="color:var(--orange);font-size:12px">—</div><div class="ml">누적 kcal</div></div>
+    <button onclick="goMapGPS()" style="flex-shrink:0;background:var(--blue);border:none;border-radius:8px;padding:6px 12px;color:#fff;font-size:11px;font-weight:700;cursor:pointer">&#x1F4CD; 내 위치</button>
+  </div>
+  <div id="energy-map"></div>
+  <div id="map-sheet">
+    <div style="width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 12px"></div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <h4 id="ms-name" style="font-size:16px;font-weight:800;flex:1"></h4>
+      <button onclick="document.getElementById('map-sheet').style.display='none'" style="background:none;border:none;font-size:20px;color:var(--t3);cursor:pointer">&#x00D7;</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+      <div style="background:var(--bg);border-radius:8px;padding:10px;text-align:center">
+        <div id="ms-mean" style="font-size:20px;font-weight:900;font-family:monospace"></div>
+        <div style="font-size:10px;color:var(--t2)">평균 kcal</div>
+      </div>
+      <div style="background:var(--bg);border-radius:8px;padding:10px;text-align:center">
+        <div id="ms-range" style="font-size:13px;font-weight:700;font-family:monospace"></div>
+        <div style="font-size:10px;color:var(--t2)">P10 ~ P90</div>
+      </div>
+    </div>
+    <div style="font-size:12px;color:var(--t2);margin-bottom:8px">
+      <span id="ms-floor"></span>&nbsp;&nbsp;<span id="ms-elev"></span>
+    </div>
+    <div id="ms-mydel" style="display:none;background:var(--blue-bg);border-radius:8px;padding:10px;font-size:12px;font-weight:700;color:var(--blue)">&#x1F4E6; 내 배송 있음</div>
+  </div>
+  <div class="bnav">
+    <button class="ni" onclick="gp('list')"><span class="nico">&#x1F4CB;</span><span class="nlbl">배송목록</span></button>
+    <button class="ni on" onclick="gp('map')"><span class="nico">&#x1F5FA;</span><span class="nlbl">에너지맵</span></button>
+    <button class="ni" onclick="gp('cal')"><span class="nico">&#x1F4C5;</span><span class="nlbl">기록</span></button>
+    <button class="ni" onclick="gp('set')"><span class="nico">&#x2699;</span><span class="nlbl">설정</span></button>
   </div>
 </div>
 <!-- CALENDAR -->
@@ -2177,6 +2238,136 @@ function goMapMyLocation(){
     },
     {enableHighAccuracy:true,timeout:10000,maximumAge:0}
   );
+}
+
+const BLDG_ENERGY = {
+  "용인모현스위첸아파트":{"mean":91.717,"p10":74.148,"p90":109.796,"risk":"HIGH","floor":17,"has_elevator":true},
+  "어문학관":{"mean":44.561,"p10":29.901,"p90":61.129,"risk":"HIGH","floor":5,"has_elevator":false},
+  "삼일빌라":{"mean":34.419,"p10":22.241,"p90":47.85,"risk":"HIGH","floor":3,"has_elevator":false},
+  "백년관":{"mean":33.303,"p10":27.863,"p90":38.843,"risk":"HIGH","floor":11,"has_elevator":true},
+  "공학관":{"mean":32.789,"p10":15.589,"p90":49.374,"risk":"HIGH","floor":5,"has_elevator":false},
+  "노블레스빌_31-26":{"mean":32.445,"p10":22.135,"p90":42.894,"risk":"HIGH","floor":4,"has_elevator":false},
+  "파인빌":{"mean":29.856,"p10":19.565,"p90":40.971,"risk":"HIGH","floor":4,"has_elevator":false},
+  "스위트빌":{"mean":26.733,"p10":15.69,"p90":37.109,"risk":"HIGH","floor":4,"has_elevator":false},
+  "프리하임빌":{"mean":17.661,"p10":9.299,"p90":25.782,"risk":"MEDIUM","floor":4,"has_elevator":false},
+  "메르시타운빌":{"mean":17.478,"p10":7.032,"p90":25.76,"risk":"MEDIUM","floor":4,"has_elevator":false},
+  "노블레스빌":{"mean":17.263,"p10":7.125,"p90":25.724,"risk":"MEDIUM","floor":4,"has_elevator":false},
+  "동양주택":{"mean":14.888,"p10":7.583,"p90":21.609,"risk":"MEDIUM","floor":3,"has_elevator":false},
+  "화전빌라":{"mean":11.922,"p10":2.733,"p90":20.868,"risk":"MEDIUM","floor":4,"has_elevator":false},
+  "뷰티풀빌":{"mean":11.873,"p10":2.859,"p90":20.46,"risk":"MEDIUM","floor":4,"has_elevator":false},
+  "자연과학관":{"mean":11.133,"p10":7.615,"p90":14.202,"risk":"MEDIUM","floor":5,"has_elevator":true},
+  "기숙사_C동":{"mean":10.978,"p10":9.265,"p90":12.918,"risk":"MEDIUM","floor":8,"has_elevator":true},
+  "기숙사_E동":{"mean":10.973,"p10":9.387,"p90":12.989,"risk":"MEDIUM","floor":4,"has_elevator":false},
+  "기숙사_A동":{"mean":10.956,"p10":9.285,"p90":12.867,"risk":"MEDIUM","floor":8,"has_elevator":true},
+  "기숙사_D동":{"mean":10.94,"p10":9.136,"p90":12.976,"risk":"MEDIUM","floor":4,"has_elevator":false},
+  "기숙사_B동":{"mean":10.907,"p10":9.192,"p90":12.948,"risk":"MEDIUM","floor":8,"has_elevator":true},
+  "한일빌라":{"mean":9.911,"p10":2.732,"p90":17.032,"risk":"MEDIUM","floor":4,"has_elevator":false},
+  "이츠빌리지":{"mean":7.198,"p10":2.469,"p90":13.03,"risk":"LOW","floor":3,"has_elevator":false},
+  "성일맨션":{"mean":4.697,"p10":2.369,"p90":6.717,"risk":"LOW","floor":2,"has_elevator":false},
+  "인문경상관":{"mean":3.073,"p10":2.005,"p90":4.159,"risk":"LOW","floor":4,"has_elevator":false},
+  "창업보육센터":{"mean":3.055,"p10":2.02,"p90":4.149,"risk":"LOW","floor":4,"has_elevator":false},
+  "학생회관":{"mean":3.055,"p10":2.013,"p90":4.131,"risk":"LOW","floor":4,"has_elevator":false},
+  "교양관":{"mean":3.038,"p10":2.002,"p90":4.14,"risk":"LOW","floor":5,"has_elevator":true},
+  "후생복지관":{"mean":3.018,"p10":1.99,"p90":4.095,"risk":"LOW","floor":4,"has_elevator":false},
+};
+const BLDG_COORDS_ALL = {
+  "용인모현스위첸아파트":{"lat":37.334639,"lng":127.254254},
+  "어문학관":{"lat":37.338494,"lng":127.273818},
+  "삼일빌라":{"lat":37.334813,"lng":127.252709},
+  "백년관":{"lat":37.337331,"lng":127.265474},
+  "공학관":{"lat":37.337721,"lng":127.267763},
+  "노블레스빌_31-26":{"lat":37.334563,"lng":127.251781},
+  "파인빌":{"lat":37.336309,"lng":127.254254},
+  "스위트빌":{"lat":37.334078,"lng":127.252726},
+  "프리하임빌":{"lat":37.337251,"lng":127.253889},
+  "메르시타운빌":{"lat":37.337493,"lng":127.254086},
+  "노블레스빌":{"lat":37.337488,"lng":127.25329},
+  "동양주택":{"lat":37.335226,"lng":127.252613},
+  "화전빌라":{"lat":37.336594,"lng":127.253394},
+  "뷰티풀빌":{"lat":37.337416,"lng":127.254557},
+  "자연과학관":{"lat":37.33888,"lng":127.266147},
+  "기숙사_C동":{"lat":37.335178,"lng":127.263631},
+  "기숙사_E동":{"lat":37.333157,"lng":127.261437},
+  "기숙사_A동":{"lat":37.334453,"lng":127.26271},
+  "기숙사_D동":{"lat":37.333698,"lng":127.262573},
+  "기숙사_B동":{"lat":37.33513,"lng":127.262692},
+  "한일빌라":{"lat":37.335432,"lng":127.253437},
+  "이츠빌리지":{"lat":37.336842,"lng":127.253741},
+  "성일맨션":{"lat":37.335236,"lng":127.252081},
+  "인문경상관":{"lat":37.339748,"lng":127.27456},
+  "학생회관":{"lat":37.337189,"lng":127.269769},
+  "창업보육센터":{"lat":37.339062,"lng":127.267414},
+  "교양관":{"lat":37.33974,"lng":127.272058},
+  "후생복지관":{"lat":37.337753,"lng":127.268621},
+};
+
+function matchBldg(addr){
+  for(const n of Object.keys(BLDG_ENERGY)){if(addr.includes(n))return n;}
+  return null;
+}
+let eMap=null,eHeat=[],eBubbles=[],eMyMk=null,eShowHeat=true;
+function eCol(mean,maxK){
+  const r=mean/maxK;
+  if(r<0.25)return'#22c55e';if(r<0.45)return'#84cc16';
+  if(r<0.60)return'#f59e0b';if(r<0.75)return'#f97316';
+  if(r<0.90)return'#ef4444';return'#b91c1c';
+}
+function initEMap(){
+  if(eMap){eMap.autoResize();updMapStat();return;}
+  eMap=new naver.maps.Map('energy-map',{center:new naver.maps.LatLng(37.336,127.260),zoom:14,mapTypeId:naver.maps.MapTypeId.NORMAL});
+  const maxK=Math.max(...Object.values(BLDG_ENERGY).map(e=>e.mean));
+  Object.entries(BLDG_COORDS_ALL).forEach(([name,coord])=>{
+    const en=BLDG_ENERGY[name];if(!en)return;
+    const col=eCol(en.mean,maxK),op=0.10+(en.mean/maxK)*0.32,r2=80+(en.mean/maxK)*250;
+    [r2,r2*0.4].forEach(radius=>eHeat.push(new naver.maps.Circle({map:eMap,center:new naver.maps.LatLng(coord.lat,coord.lng),radius,fillColor:col,fillOpacity:op,strokeWeight:0})));
+    const myD=S.dels&&S.dels.find(d=>matchBldg(d.addr)===name&&d.status!=='done');
+    const htm=`<div style="transform:translate(-50%,-100%);display:flex;flex-direction:column;align-items:center;cursor:pointer"><div style="background:#fff;border:2px solid ${col};border-radius:8px;padding:4px 9px;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.15);position:relative${myD?';border-width:3px':''}">${myD?'<div style="position:absolute;top:-8px;right:-8px;background:var(--blue);color:#fff;border-radius:50%;width:16px;height:16px;font-size:9px;display:flex;align-items:center;justify-content:center">📦</div>':''}<div style="font-size:9px;font-weight:700;color:#555">${name}</div><div style="font-size:11px;font-weight:700;font-family:monospace">${en.p10.toFixed(1)}~${en.p90.toFixed(1)} kcal</div><div style="position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);border:3px solid transparent;border-top-color:${col}"></div></div><div style="width:6px;height:6px;border-radius:50%;background:${col};margin-top:2px"></div></div>`;
+    const mk=new naver.maps.Marker({position:new naver.maps.LatLng(coord.lat,coord.lng),map:eMap,icon:{content:htm,anchor:new naver.maps.Point(55,44)}});
+    naver.maps.Event.addListener(mk,'click',()=>openMapSheet(name,en,myD,maxK));
+    eBubbles.push(mk);
+  });
+  updMapStat();
+}
+function openMapSheet(name,en,myD,maxK){
+  const col=eCol(en.mean,maxK||Math.max(...Object.values(BLDG_ENERGY).map(e=>e.mean)));
+  document.getElementById('ms-name').textContent=name;
+  document.getElementById('ms-mean').textContent=en.mean.toFixed(1);
+  document.getElementById('ms-mean').style.color=col;
+  document.getElementById('ms-range').textContent=en.p10.toFixed(1)+' ~ '+en.p90.toFixed(1);
+  document.getElementById('ms-floor').textContent=en.floor+'층';
+  document.getElementById('ms-elev').textContent=en.has_elevator?'🛗 엘리베이터':'🪜 계단';
+  document.getElementById('ms-mydel').style.display=myD?'':'none';
+  document.getElementById('map-sheet').style.display='';
+  const co=BLDG_COORDS_ALL[name];if(co&&eMap)eMap.setCenter(new naver.maps.LatLng(co.lat,co.lng));
+}
+function toggleMapHeat(){
+  eShowHeat=!eShowHeat;eHeat.forEach(c=>c.setMap(eShowHeat?eMap:null));
+  const btn=document.getElementById('map-heat-btn');
+  if(btn){btn.style.background=eShowHeat?'var(--accent)':'var(--bg)';btn.style.color=eShowHeat?'#fff':'var(--t2)';}
+}
+function updMapStat(){
+  if(!S||!S.dels)return;
+  const p=S.dels.filter(d=>matchBldg(d.addr)&&d.status!=='done').length;
+  const d=S.dels.filter(d=>d.status==='done').length;
+  const e1=document.getElementById('mp-del'),e2=document.getElementById('mp-done'),e3=document.getElementById('mp-kcal');
+  if(e1)e1.textContent=p;if(e2)e2.textContent=d;if(e3)e3.textContent=(S.totKc||0)>0?(S.totKc||0).toFixed(1):'—';
+}
+function goMapGPS(){
+  if(!eMap||!navigator.geolocation)return;
+  const chip=document.getElementById('map-gps-chip');if(chip)chip.textContent='찾는 중…';
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const lat=pos.coords.latitude,lng=pos.coords.longitude,acc=Math.round(pos.coords.accuracy);
+    eMap.setCenter(new naver.maps.LatLng(lat,lng));eMap.setZoom(17);
+    if(chip){chip.textContent='±'+acc+'m';chip.className='gps-chip active';}
+    const h='<div style="width:16px;height:16px;background:#2563EB;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 4px rgba(37,99,235,.3);transform:translate(-50%,-50%)"></div>';
+    if(!eMyMk){eMyMk=new naver.maps.Marker({position:new naver.maps.LatLng(lat,lng),map:eMap,icon:{content:h,anchor:new naver.maps.Point(8,8)}});}
+    else{eMyMk.setPosition(new naver.maps.LatLng(lat,lng));eMyMk.setMap(eMap);}
+    if(window._ac)window._ac.setMap(null);
+    window._ac=new naver.maps.Circle({map:eMap,center:new naver.maps.LatLng(lat,lng),radius:acc,fillColor:'#3b82f6',fillOpacity:0.08,strokeColor:'#3b82f6',strokeWeight:1,strokeOpacity:0.3});
+    toast('📍 현재 위치');
+  },err=>{if(chip){chip.textContent='GPS 대기';chip.className='gps-chip';}
+    if(err.code===1)toast('위치 권한을 허용해주세요');
+  },{enableHighAccuracy:true,timeout:10000,maximumAge:0});
 }
 
 </script>
