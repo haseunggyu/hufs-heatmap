@@ -53,33 +53,45 @@ button{margin-top:8px;width:100%;padding:9px;background:#f59e0b;border:none;bord
 const BUILDINGS=[
   "백년관","어문학관","공학관","기숙사_B동","기숙사_C동",
   "기숙사_A동","기숙사_D동","기숙사_E동","자연과학관",
-  "인문경상관","학생회관","창업보육센터","교양관","후생복지관"
+  "인문경상관","학생회관","창업보육센터","교양관","후생복지관",
+  // 주변 주거지역 (추정 좌표 → 여기서 정확하게 찍기!)
+  "스위첸아파트","왕산맨션","흥양빌라","삼일빌라",
+  "한일빌라","노블레스빌","프라하임빌","이츠빌리지"
 ];
 
 // 현재 저장된 좌표 (기본값)
 const coords={
-  "백년관":{lat:37.336366,lng:127.265471},
-  "어문학관":{lat:37.337142,lng:127.272863},
-  "공학관":{lat:37.336519,lng:127.268062},
-  "기숙사_B동":{lat:37.334085,lng:127.262713},
-  "기숙사_C동":{lat:37.334133,lng:127.263513},
-  "기숙사_A동":{lat:37.333451,lng:127.262705},
-  "기숙사_D동":{lat:37.332747,lng:127.262551},
-  "기숙사_E동":{lat:37.332133,lng:127.261394},
-  "자연과학관":{lat:37.337903,lng:127.266410},
-  "인문경상관":{lat:37.338844,lng:127.274453},
-  "학생회관":{lat:37.336157,lng:127.269699},
-  "창업보육센터":{lat:37.338128,lng:127.267409},
-  "교양관":{lat:37.338853,lng:127.272074},
-  "후생복지관":{lat:37.336810,lng:127.268573}
+  "백년관":{lat:37.337236,lng:127.26545},
+  "어문학관":{lat:37.338479,lng:127.273794},
+  "공학관":{lat:37.33744,lng:127.267847},
+  "기숙사_B동":{lat:37.335117,lng:127.262659},
+  "기숙사_C동":{lat:37.335182,lng:127.263706},
+  "기숙사_A동":{lat:37.334441,lng:127.262748},
+  "기숙사_D동":{lat:37.333677,lng:127.262637},
+  "기숙사_E동":{lat:37.333157,lng:127.26148},
+  "자연과학관":{lat:37.338867,lng:127.266142},
+  "인문경상관":{lat:37.339697,lng:127.274539},
+  "학생회관":{lat:37.337121,lng:127.269742},
+  "창업보육센터":{lat:37.339032,lng:127.267366},
+  "교양관":{lat:37.339732,lng:127.272074},
+  "후생복지관":{lat:37.337731,lng:127.268637},
+  // ── 주거지역 (추정값 → 클릭해서 정확한 위치로 수정!)
+  "스위첸아파트":{lat:37.335200,lng:127.264800},
+  "왕산맨션":   {lat:37.333900,lng:127.266500},
+  "흥양빌라":   {lat:37.334100,lng:127.262100},
+  "삼일빌라":   {lat:37.333600,lng:127.266800},
+  "한일빌라":   {lat:37.334800,lng:127.265500},
+  "노블레스빌": {lat:37.334200,lng:127.263600},
+  "프라하임빌": {lat:37.334500,lng:127.264800},
+  "이츠빌리지": {lat:37.333400,lng:127.264000},
 };
 
 let active=null;
 const markers={};
 
 const map=new naver.maps.Map('map',{
-  center:new naver.maps.LatLng(37.337000,127.267000),
-  zoom:16,
+  center:new naver.maps.LatLng(37.336000,127.266000),
+  zoom:15,
   mapTypeId:naver.maps.MapTypeId.NORMAL
 });
 
@@ -132,7 +144,20 @@ naver.maps.Event.addListener(map,'click',function(e){
 
 // 건물 목록 렌더링
 const listEl=document.getElementById('building-list');
+
+// 섹션 구분
+const SECTIONS = {
+  "스위첸아파트": "── 주거지역 (추정값 수정 필요) ──"
+};
+
 BUILDINGS.forEach(name=>{
+  // 섹션 헤더 삽입
+  if(SECTIONS[name]){
+    const sep=document.createElement('div');
+    sep.style.cssText='padding:6px 16px;font-size:10px;font-weight:700;color:#9CA3AF;background:#F9FAFB;border-bottom:1px solid #F0F0F0;letter-spacing:.05em';
+    sep.textContent=SECTIONS[name];
+    listEl.appendChild(sep);
+  }
   const item=document.createElement('div');
   item.className=coords[name]?'bitem done':'bitem';
   item.id='item-'+name;
