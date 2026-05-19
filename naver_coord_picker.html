@@ -203,7 +203,18 @@ function copyResult(){
 }
 
 updateResult();
-selectBuilding(BUILDINGS[0]);
+// 캠퍼스 건물은 이미 좌표 확인됨 → 완료 표시
+const CAMPUS = ["백년관","어문학관","공학관","기숙사_B동","기숙사_C동","기숙사_A동","기숙사_D동","기숙사_E동","자연과학관","인문경상관","학생회관","창업보육센터","교양관","후생복지관"];
+CAMPUS.forEach(name=>{
+  const el=document.getElementById('item-'+name);
+  const st=document.getElementById('status-'+name);
+  if(el){ el.className='bitem done'; }
+  if(st){ st.textContent='확인 ✓'; st.className='bstatus s-done'; }
+});
+// 주거지역 첫 번째 건물부터 시작
+selectBuilding("스위첸아파트");
+map.setCenter(new naver.maps.LatLng(37.334500,127.264500));
+map.setZoom(16);
 </script>
 </body>
 </html>
