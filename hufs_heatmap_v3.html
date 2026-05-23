@@ -553,21 +553,23 @@ function calcStats(order){
 function renderCompare(){
   const se=calcStats(energyOrder), sg=calcStats(groupOrder);
   const isE=optMode==='energy';
-  document.getElementById('opt-compare').innerHTML=`
-    <div class="cmp-box ${isE?'active':''}">
-      <div class="cmp-label">🔥 에너지순</div>
-      <div class="cmp-val">${se.totalKcal.toFixed(0)}<span class="cmp-unit"> kcal</span></div>
-      <div class="cmp-sub" style="color:#aaa">${fmtDist(se.totalDist)} 이동</div>
-      <div style="margin-top:4px;font-size:9px;color:#f59e0b;font-weight:600">Visentin(2018) 기반</div>
-      <div id="route-stat-E" style="font-size:9px;color:#888;margin-top:2px"></div>
-    </div>
-    <div class="cmp-box ${!isE?'active':''}">
-      <div class="cmp-label">📍 그룹+거리</div>
-      <div class="cmp-val">${sg.totalKcal.toFixed(0)}<span class="cmp-unit"> kcal</span></div>
-      <div class="cmp-sub" style="color:#aaa">${fmtDist(sg.totalDist)} 이동 (직선)</div>
-      <div style="margin-top:4px;font-size:9px;color:#0284c7;font-weight:600">LOW→MED→HIGH+TSP</div>
-      <div id="route-stat-G" style="font-size:9px;color:#888;margin-top:2px"></div>
-    </div>\`;
+  const boxA='cmp-box'+(isE?' active':'');
+  const boxB='cmp-box'+(!isE?' active':'');
+  document.getElementById('opt-compare').innerHTML=
+    '<div class="'+boxA+'">'
+    +'<div class="cmp-label">🔥 에너지순</div>'
+    +'<div class="cmp-val">'+se.totalKcal.toFixed(0)+'<span class="cmp-unit"> kcal</span></div>'
+    +'<div class="cmp-sub" style="color:#aaa">'+fmtDist(se.totalDist)+' 이동 (직선)</div>'
+    +'<div style="margin-top:4px;font-size:9px;color:#f59e0b;font-weight:600">Visentin(2018) 기반</div>'
+    +'<div id="route-stat-E" style="font-size:9px;color:#888;margin-top:2px"></div>'
+    +'</div>'
+    +'<div class="'+boxB+'">'
+    +'<div class="cmp-label">📍 그룹+거리</div>'
+    +'<div class="cmp-val">'+sg.totalKcal.toFixed(0)+'<span class="cmp-unit"> kcal</span></div>'
+    +'<div class="cmp-sub" style="color:#aaa">'+fmtDist(sg.totalDist)+' 이동 (직선)</div>'
+    +'<div style="margin-top:4px;font-size:9px;color:#0284c7;font-weight:600">LOW→MED→HIGH+TSP</div>'
+    +'<div id="route-stat-G" style="font-size:9px;color:#888;margin-top:2px"></div>'
+    +'</div>';
 }
 
 // ── 최적화 리스트 렌더 ─────────────────────────────────────────
