@@ -421,20 +421,56 @@ function drawRoute(order, color, markerArr, polyRef){
 routePolyE=drawRoute(energyOrder,'#f59e0b',routeMarkersE,null);
 routePolyG=drawRoute(groupOrder,'#0284c7',routeMarkersG,null);
 
-// 줌 연동
-const ZOOM_TH=15;
+// ── 3단계 줌 시스템 ──────────────────────────────────────────
+// zoom < 14      : 히트맵만 (아무 마커 없음)
+// zoom 14~15     : 지역 집계 마커 (원형 요약)
+// zoom 16~16     : 건물 버블 마커 + 경로 선만
+// zoom >= 17     : 건물 버블 + 경로 선 + 경로 번호 마커
+const Z_REGION = 14;   // 지역 마커 시작
+const Z_BUBBLE = 16;   // 건물 버블 시작
+const Z_ROUTE  = 17;   // 경로 번호 마커 시작
+
 function updateZoom(){
-  const z=map.getZoom();
-  const badge=document.getElementById('zoom-badge');
-  if(z<ZOOM_TH){
+  const z = map.getZoom();
+  const badge = document.getElementById('zoom-badge');
+
+  // 히트맵만 (< Z_REGION)
+  if(z < Z_REGION){
+    regionMarkers.forEach(m=>m.setMap(null));
     bubbleMarkers.forEach(m=>m.setMap(null));
     statusMarkers.forEach(s=>s.marker.setMap(null));
-    routeMarkersE.forEach(m=>m.setMap(null));
-    routeMarkersG.forEach(m=>m.setMap(null));
     routePolyE&&routePolyE.setMap(null);
     routePolyG&&routePolyG.setMap(null);
+    routeMarkersE.forEach(m=>m.setMap(null));
+    routeMarkersG.forEach(m=>m.setMap(null));
+    badge.textContent='🌏 전체 에너지 분포';
+    badge.style.background='#fff';
+
+  // 지역 집계 마커 (Z_REGION ~ Z_BUBBLE-1)
+  } else if(z < Z_BUBBLE){
     regionMarkers.forEach(m=>m.setMap(map));
+    bubbleMarkers.forEach(m=>m.setMap(null));
+    statusMarkers.forEach(s=>s.marker.setMap(null));
+    routePolyE&&routePolyE.setMap(null);
+    routePolyG&&routePolyG.setMap(null);
+    routeMarkersE.forEach(m=>m.setMap(null));
+    routeMarkersG.forEach(m=>m.setMap(null));
     badge.textContent='🏘️ 지역별 에너지 합산';
+    badge.style.background='#fff';
+
+  // 건물 버블 + 경로선만 (Z_BUBBLE ~ Z_ROUTE-1)
+  } else if(z < Z_ROUTE){
+    regionMarkers.forEach(m=>m.setMap(null));
+    bubbleMarkers.forEach(m=>m.setMap(showBubble?map:null));
+    statusMarkers.forEach(s=>s.marker.setMap(showBubble?map:null));
+    routePolyE&&routePolyE.setMap(showRouteE?map:null);
+    routePolyG&&routePolyG.setMap(showRouteG?map:null);
+    routeMarkersE.forEach(m=>m.setMap(null));   // 번호는 숨김
+    routeMarkersG.forEach(m=>m.setMap(null));
+    badge.textContent='🏢 건물별 예측 에너지';
+    badge.style.background='#fff';
+
+  // 건물 버블 + 경로선 + 번호 마커 (>= Z_ROUTE)
   } else {
     regionMarkers.forEach(m=>m.setMap(null));
     bubbleMarkers.forEach(m=>m.setMap(showBubble?map:null));
@@ -443,10 +479,19 @@ function updateZoom(){
     routePolyG&&routePolyG.setMap(showRouteG?map:null);
     routeMarkersE.forEach(m=>m.setMap(showRouteE?map:null));
     routeMarkersG.forEach(m=>m.setMap(showRouteG?map:null));
-    badge.textContent='🏢 건물별 예측 에너지';
+    badge.textContent='📍 건물별 배송 순서';
+    badge.style.background='#03c75a';
+    badge.style.color='#fff';
+    badge.style.borderColor='#03c75a';
   }
 }
-naver.maps.Event.addListener(map,'zoom_changed',updateZoom);
+naver.maps.Event.addListener(map,'zoom_changed',()=>{
+  updateZoom();
+  // 줌 뱃지 색상 리셋
+  const z=map.getZoom();
+  const badge=document.getElementById('zoom-badge');
+  if(z<Z_ROUTE){badge.style.color='#555';badge.style.borderColor='#e0e0e0';}
+});
 updateZoom();
 
 // ── 최적화 비교표 렌더 ─────────────────────────────────────────
@@ -652,19 +697,29 @@ function toggleLayer(type){
   }
 }
 function toggleRoute(type){
-  const z=map.getZoom()>=ZOOM_TH;
+  const z=map.getZoom();
   if(type==='energy'){
     showRouteE=!showRouteE;
-    routePolyE&&routePolyE.setMap(showRouteE&&z?map:null);
-    routeMarkersE.forEach(m=>m.setMap(showRouteE&&z?map:null));
+    if(showRouteE){
+      routePolyE&&routePolyE.setMap(z>=Z_BUBBLE?map:null);
+      routeMarkersE.forEach(m=>m.setMap(z>=Z_ROUTE?map:null));
+      switchTab('optimize');switchOptMode('energy');
+    } else {
+      routePolyE&&routePolyE.setMap(null);
+      routeMarkersE.forEach(m=>m.setMap(null));
+    }
     document.getElementById('btn-route-e').className='tbtn'+(showRouteE?' on-energy':'');
-    if(showRouteE){switchTab('optimize');switchOptMode('energy');}
   } else {
     showRouteG=!showRouteG;
-    routePolyG&&routePolyG.setMap(showRouteG&&z?map:null);
-    routeMarkersG.forEach(m=>m.setMap(showRouteG&&z?map:null));
+    if(showRouteG){
+      routePolyG&&routePolyG.setMap(z>=Z_BUBBLE?map:null);
+      routeMarkersG.forEach(m=>m.setMap(z>=Z_ROUTE?map:null));
+      switchTab('optimize');switchOptMode('group');
+    } else {
+      routePolyG&&routePolyG.setMap(null);
+      routeMarkersG.forEach(m=>m.setMap(null));
+    }
     document.getElementById('btn-route-g').className='tbtn'+(showRouteG?' on-group':'');
-    if(showRouteG){switchTab('optimize');switchOptMode('group');}
   }
 }
 
