@@ -195,6 +195,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Noto Sans KR','Segoe UI',sans
       <button class="tbtn on" id="btn-bubble" onclick="toggleLayer('bubble')">버블</button>
       <button class="tbtn" id="btn-route-e" onclick="toggleRoute('energy')">🔥경로</button>
       <button class="tbtn" id="btn-route-g" onclick="toggleRoute('group')">📍경로</button>
+      <button class="tbtn" id="btn-road" onclick="toggleRoadMode()">🛣️ 도로경로</button>
     </div>
     <div id="legend">
       <h4>에너지 강도</h4>
@@ -402,13 +403,16 @@ DATA.forEach((d,i)=>{
 // 경로 폴리라인 + 순서 마커
 let routePolyE=null, routePolyG=null;
 const routeMarkersE=[], routeMarkersG=[];
+let roadPolyE=null, roadPolyG=null;
+let roadMode=false;
 
+// 직선 경로 (점선으로 구분)
 function drawRoute(order, color, markerArr, polyRef){
   if(polyRef) polyRef.setMap(null);
   markerArr.forEach(m=>m.setMap(null));
   markerArr.length=0;
   const path=order.map(d=>new naver.maps.LatLng(d.lat,d.lng));
-  const poly=new naver.maps.Polyline({map:null,path,strokeColor:color,strokeWeight:3,strokeOpacity:.85,strokeStyle:'solid'});
+  const poly=new naver.maps.Polyline({map:null,path,strokeColor:color,strokeWeight:3,strokeOpacity:.5,strokeStyle:'dash'});
   order.forEach((d,i)=>{
     const html=`<div style="background:${color};color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;border:2px solid #fff;box-shadow:0 2px 5px rgba(0,0,0,.3);cursor:pointer">${i+1}</div>`;
     const idx=DATA.findIndex(x=>x.building===d.building);
@@ -420,6 +424,56 @@ function drawRoute(order, color, markerArr, polyRef){
 }
 routePolyE=drawRoute(energyOrder,'#f59e0b',routeMarkersE,null);
 routePolyG=drawRoute(groupOrder,'#0284c7',routeMarkersG,null);
+
+// ── OSRM 차량 도로 경로 ────────────────────────────────────────
+async function fetchRoadPath(order){
+  const coords=order.map(d=>`${d.lng},${d.lat}`).join(';');
+  const url=`https://router.project-osrm.org/route/v1/car/${coords}?overview=full&geometries=geojson`;
+  try{
+    const res=await fetch(url);
+    const data=await res.json();
+    if(data.code!=='Ok'||!data.routes[0]) throw new Error('경로없음');
+    const path=data.routes[0].geometry.coordinates.map(([lng,lat])=>new naver.maps.LatLng(lat,lng));
+    return {path, dist:data.routes[0].distance, dur:data.routes[0].duration};
+  }catch(e){ console.warn('OSRM 실패(직선 유지):',e); return null; }
+}
+
+function setRoadBtnState(loading){
+  const btn=document.getElementById('btn-road');
+  if(!btn)return;
+  btn.disabled=!!loading;
+  if(loading){btn.textContent='⏳ 경로 불러오는 중…';btn.className='tbtn';}
+  else{btn.textContent=roadMode?'🛣️ 도로경로 ON':'🛣️ 도로경로';btn.className='tbtn'+(roadMode?' on':'');}
+}
+
+async function toggleRoadMode(){
+  roadMode=!roadMode;
+  setRoadBtnState(true);
+  if(roadPolyE){roadPolyE.setMap(null);roadPolyE=null;}
+  if(roadPolyG){roadPolyG.setMap(null);roadPolyG=null;}
+  if(roadMode){
+    const [resE,resG]=await Promise.all([fetchRoadPath(energyOrder),fetchRoadPath(groupOrder)]);
+    const z=map.getZoom();
+    if(resE){
+      roadPolyE=new naver.maps.Polyline({map:showRouteE&&z>=Z_BUBBLE?map:null,path:resE.path,strokeColor:'#f59e0b',strokeWeight:4,strokeOpacity:.9});
+      routePolyE&&routePolyE.setMap(null);
+      const el=document.getElementById('route-stat-E');
+      if(el) el.textContent=`🛣️ ${(resE.dist/1000).toFixed(2)}km · 차량 ${Math.round(resE.dur/60)}분`;
+    }
+    if(resG){
+      roadPolyG=new naver.maps.Polyline({map:showRouteG&&z>=Z_BUBBLE?map:null,path:resG.path,strokeColor:'#0284c7',strokeWeight:4,strokeOpacity:.9});
+      routePolyG&&routePolyG.setMap(null);
+      const el=document.getElementById('route-stat-G');
+      if(el) el.textContent=`🛣️ ${(resG.dist/1000).toFixed(2)}km · 차량 ${Math.round(resG.dur/60)}분`;
+    }
+  } else {
+    const z=map.getZoom();
+    if(showRouteE&&z>=Z_BUBBLE) routePolyE&&routePolyE.setMap(map);
+    if(showRouteG&&z>=Z_BUBBLE) routePolyG&&routePolyG.setMap(map);
+    renderCompare();
+  }
+  setRoadBtnState(false);
+}
 
 // ── 3단계 줌 시스템 ──────────────────────────────────────────
 // zoom < 14      : 히트맵만 (아무 마커 없음)
@@ -463,9 +517,14 @@ function updateZoom(){
     regionMarkers.forEach(m=>m.setMap(null));
     bubbleMarkers.forEach(m=>m.setMap(showBubble?map:null));
     statusMarkers.forEach(s=>s.marker.setMap(showBubble?map:null));
-    routePolyE&&routePolyE.setMap(showRouteE?map:null);
-    routePolyG&&routePolyG.setMap(showRouteG?map:null);
-    routeMarkersE.forEach(m=>m.setMap(null));   // 번호는 숨김
+    if(roadMode){
+      roadPolyE&&roadPolyE.setMap(showRouteE?map:null);
+      roadPolyG&&roadPolyG.setMap(showRouteG?map:null);
+    } else {
+      routePolyE&&routePolyE.setMap(showRouteE?map:null);
+      routePolyG&&routePolyG.setMap(showRouteG?map:null);
+    }
+    routeMarkersE.forEach(m=>m.setMap(null));
     routeMarkersG.forEach(m=>m.setMap(null));
     badge.textContent='🏢 건물별 예측 에너지';
     badge.style.background='#fff';
@@ -475,8 +534,13 @@ function updateZoom(){
     regionMarkers.forEach(m=>m.setMap(null));
     bubbleMarkers.forEach(m=>m.setMap(showBubble?map:null));
     statusMarkers.forEach(s=>s.marker.setMap(showBubble?map:null));
-    routePolyE&&routePolyE.setMap(showRouteE?map:null);
-    routePolyG&&routePolyG.setMap(showRouteG?map:null);
+    if(roadMode){
+      roadPolyE&&roadPolyE.setMap(showRouteE?map:null);
+      roadPolyG&&roadPolyG.setMap(showRouteG?map:null);
+    } else {
+      routePolyE&&routePolyE.setMap(showRouteE?map:null);
+      routePolyG&&routePolyG.setMap(showRouteG?map:null);
+    }
     routeMarkersE.forEach(m=>m.setMap(showRouteE?map:null));
     routeMarkersG.forEach(m=>m.setMap(showRouteG?map:null));
     badge.textContent='📍 건물별 배송 순서';
@@ -509,13 +573,15 @@ function renderCompare(){
       <div class="cmp-val">${se.totalKcal.toFixed(0)}<span class="cmp-unit"> kcal</span></div>
       <div class="cmp-sub" style="color:#aaa">${fmtDist(se.totalDist)} 이동</div>
       <div style="margin-top:4px;font-size:9px;color:#f59e0b;font-weight:600">Visentin(2018) 기반</div>
+      <div id="route-stat-E" style="font-size:9px;color:#888;margin-top:2px"></div>
     </div>
     <div class="cmp-box ${!isE?'active':''}">
       <div class="cmp-label">📍 그룹+거리</div>
       <div class="cmp-val">${sg.totalKcal.toFixed(0)}<span class="cmp-unit"> kcal</span></div>
-      <div class="cmp-sub" style="color:#aaa">${fmtDist(sg.totalDist)} 이동</div>
+      <div class="cmp-sub" style="color:#aaa">${fmtDist(sg.totalDist)} 이동 (직선)</div>
       <div style="margin-top:4px;font-size:9px;color:#0284c7;font-weight:600">LOW→MED→HIGH+TSP</div>
-    </div>`;
+      <div id="route-stat-G" style="font-size:9px;color:#888;margin-top:2px"></div>
+    </div>\`;
 }
 
 // ── 최적화 리스트 렌더 ─────────────────────────────────────────
