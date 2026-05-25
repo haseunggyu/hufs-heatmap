@@ -126,6 +126,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Noto Sans KR','Segoe UI',sans
 
 #mob-toggle{display:none;position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:700;background:#03c75a;color:#fff;border:none;border-radius:22px;padding:11px 22px;font-size:13px;font-weight:700;box-shadow:0 4px 16px rgba(3,199,90,.4);cursor:pointer;}
 #mob-close{display:none;}
+/* 열환경 배너 */
+.heat-bar{display:flex;align-items:center;gap:8px;padding:7px 14px;font-size:11px;font-weight:600;border-bottom:1px solid #f0f0f0;transition:background .3s;flex-wrap:wrap;}
+.heat-bar.ok{background:#f0fdf4;color:#166534;}
+.heat-bar.warn{background:#fefce8;color:#854d0e;}
+.heat-bar.danger{background:#fff7ed;color:#9a3412;}
+.heat-bar.critical{background:#fef2f2;color:#991b1b;}
+.heat-dot{width:8px;height:8px;border-radius:50%;background:currentColor;flex-shrink:0;}
+.heat-input{display:flex;align-items:center;gap:5px;margin-left:auto;flex-wrap:wrap;}
+.heat-input input{width:44px;padding:3px 5px;border:1px solid #e0e0e0;border-radius:6px;font-size:11px;text-align:center;}
+.heat-input label{font-size:10px;color:#888;}
 @media(max-width:640px){
   #collapse-btn{display:none;}
   #mob-toggle{display:block;}
@@ -207,6 +217,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Noto Sans KR','Segoe UI',sans
         <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:#555"><div style="width:18px;height:3px;background:#0284c7;border-radius:2px"></div>그룹+거리</div>
       </div>
     </div>
+    <!-- 열환경 배너 -->
+    <div id="heat-bar" class="heat-bar ok" style="display:none">
+      <div class="heat-dot"></div>
+      <span id="hb-label">✅ 열환경 안전</span>
+      <span id="hb-wbgt" style="opacity:.7"></span>
+      <div class="heat-input">
+        <label>기온</label>
+        <input type="number" id="inp-temp" value="25" min="-10" max="45" oninput="updateHeat()">℃
+        <label>습도</label>
+        <input type="number" id="inp-hum"  value="60" min="0"   max="100" oninput="updateHeat()">%
+      </div>
+    </div>
     <div id="detail">
       <button id="dc" onclick="closeDetail()">×</button>
       <div id="dn"></div><div id="dm"></div>
@@ -226,23 +248,87 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Noto Sans KR','Segoe UI',sans
 </div>
 
 <script>
+// ── 열환경 계산 (민서 courier_guard_v5 기반) ────────────────────
+// Stull (2011) 습구온도 근사 + NIOSH (2016) REL 기준
+let heatState = { temp: 25, hum: 60, wbgt: 18.5, multiplier: 1.0, risk: 'ok' };
+
+function approxWBGT(tempC, rhPct, sunCond='full_sun') {
+  // Stull (2011) 습구온도 근사식
+  const Tw = tempC * Math.atan(0.151977 * Math.sqrt(rhPct + 8.313659))
+    + Math.atan(tempC + rhPct)
+    - Math.atan(rhPct - 1.676331)
+    + 0.00391838 * Math.pow(rhPct, 1.5) * Math.atan(0.023101 * rhPct)
+    - 4.686035;
+  const Tg = sunCond === 'full_sun' ? tempC + 10 : sunCond === 'partly_cloudy' ? tempC + 4 : tempC;
+  return 0.7 * Tw + 0.2 * Tg + 0.1 * tempC;
+}
+
+function nioshREL(metabolicW) {
+  // NIOSH (2016) REL for acclimatized workers
+  return 56.7 - 11.5 * Math.log10(Math.max(metabolicW, 50));
+}
+
+function heatMultiplier(temp) {
+  // 관리자 대시보드 기준 (admin_dashboard)
+  if (temp >= 34) return 1.20;
+  if (temp >= 31) return 1.12;
+  if (temp >= 28) return 1.05;
+  return 1.00;
+}
+
+function updateHeat() {
+  const temp = parseFloat(document.getElementById('inp-temp')?.value) || 25;
+  const hum  = parseFloat(document.getElementById('inp-hum')?.value)  || 60;
+  const wbgt = approxWBGT(temp, hum, 'full_sun');
+  const rel  = nioshREL(300); // 배달 중강도 ~300W
+  const mul  = heatMultiplier(temp);
+  const delta = wbgt - rel;
+
+  let risk, label;
+  if      (delta < -3) { risk='ok';       label='✅ 열환경 안전'; }
+  else if (delta <  0) { risk='warn';     label='⚠️ NIOSH REL 근접'; }
+  else if (delta <  3) { risk='danger';   label='🌡️ NIOSH REL 초과'; }
+  else                 { risk='critical'; label='🚨 열환경 위험'; }
+
+  heatState = { temp, hum, wbgt, multiplier: mul, risk };
+
+  const bar = document.getElementById('heat-bar');
+  if (bar) {
+    bar.className = 'heat-bar ' + risk;
+    bar.style.display = '';
+    document.getElementById('hb-label').textContent =
+      label + (mul > 1 ? ` (에너지 ×${mul.toFixed(2)})` : '');
+    document.getElementById('hb-wbgt').textContent =
+      `WBGT≈${wbgt.toFixed(1)}°C / REL ${rel.toFixed(1)}°C`;
+  }
+
+  // 버블마커 & 상세패널 업데이트
+  rebuildBubbles();
+}
+
+function heatKcal(baseKcal) {
+  return baseKcal * heatState.multiplier;
+}
+
 // ── 건물 데이터 ────────────────────────────────────────────────
-// ── 학교 캠퍼스 건물만 (빌라촌 제외) ────────────────────────
+// ── 학교 캠퍼스 건물 (원본 Python 시뮬레이션 결과, N=1000) ──────
+// E(J) = MET × C_load × (W+L) × time(h) × 4184
+// Garg et al.(1978) | 배송원 72kg/175cm/35세 | 패키지 0.5~15kg
 const DATA=[
-  {building:"어문학관",lat:37.338494,lng:127.273818,mean_kcal:44.56,p10_kcal:29.90,p90_kcal:61.13,risk:"HIGH",delivery_mode:"floor_delivery",max_floor:5,has_elevator:false},
-  {building:"백년관",lat:37.337331,lng:127.265474,mean_kcal:33.30,p10_kcal:27.86,p90_kcal:38.84,risk:"HIGH",delivery_mode:"floor_delivery",max_floor:11,has_elevator:true},
-  {building:"공학관",lat:37.337721,lng:127.267763,mean_kcal:32.79,p10_kcal:15.59,p90_kcal:49.37,risk:"HIGH",delivery_mode:"mixed",max_floor:5,has_elevator:false},
-  {building:"자연과학관",lat:37.33888,lng:127.266147,mean_kcal:11.13,p10_kcal:7.62,p90_kcal:14.20,risk:"MEDIUM",delivery_mode:"floor_delivery",max_floor:5,has_elevator:true},
-  {building:"기숙사_C동",lat:37.335178,lng:127.263631,mean_kcal:10.98,p10_kcal:9.27,p90_kcal:12.92,risk:"MEDIUM",delivery_mode:"storage",max_floor:8,has_elevator:true},
-  {building:"기숙사_E동",lat:37.333157,lng:127.261437,mean_kcal:10.97,p10_kcal:9.39,p90_kcal:12.99,risk:"MEDIUM",delivery_mode:"storage",max_floor:4,has_elevator:false},
-  {building:"기숙사_A동",lat:37.334453,lng:127.26271,mean_kcal:10.96,p10_kcal:9.29,p90_kcal:12.87,risk:"MEDIUM",delivery_mode:"storage",max_floor:8,has_elevator:true},
-  {building:"기숙사_D동",lat:37.333698,lng:127.262573,mean_kcal:10.94,p10_kcal:9.14,p90_kcal:12.98,risk:"MEDIUM",delivery_mode:"storage",max_floor:4,has_elevator:false},
-  {building:"기숙사_B동",lat:37.33513,lng:127.262692,mean_kcal:10.91,p10_kcal:9.19,p90_kcal:12.95,risk:"MEDIUM",delivery_mode:"storage",max_floor:8,has_elevator:true},
-  {building:"인문경상관",lat:37.339748,lng:127.27456,mean_kcal:3.07,p10_kcal:2.00,p90_kcal:4.16,risk:"LOW",delivery_mode:"storage",max_floor:4,has_elevator:false},
-  {building:"학생회관",lat:37.337189,lng:127.269769,mean_kcal:3.06,p10_kcal:2.01,p90_kcal:4.13,risk:"LOW",delivery_mode:"storage",max_floor:4,has_elevator:false},
-  {building:"창업보육센터",lat:37.339062,lng:127.267414,mean_kcal:3.06,p10_kcal:2.02,p90_kcal:4.15,risk:"LOW",delivery_mode:"storage",max_floor:4,has_elevator:false},
-  {building:"교양관",lat:37.33974,lng:127.272058,mean_kcal:3.04,p10_kcal:2.00,p90_kcal:4.14,risk:"LOW",delivery_mode:"storage",max_floor:5,has_elevator:true},
-  {building:"후생복지관",lat:37.337753,lng:127.268621,mean_kcal:3.02,p10_kcal:1.99,p90_kcal:4.09,risk:"LOW",delivery_mode:"storage",max_floor:4,has_elevator:false}
+  {building:"백년관",      lat:37.337331,lng:127.265474,mean_kcal:43.30,p10_kcal:35.28,p90_kcal:51.15,risk:"HIGH",  delivery_mode:"floor_delivery",max_floor:11,has_elevator:true},
+  {building:"어문학관",    lat:37.338494,lng:127.273818,mean_kcal:41.00,p10_kcal:27.06,p90_kcal:55.20,risk:"HIGH",  delivery_mode:"floor_delivery",max_floor:5, has_elevator:false},
+  {building:"공학관",      lat:37.337721,lng:127.267763,mean_kcal:31.12,p10_kcal:15.60,p90_kcal:45.53,risk:"HIGH",  delivery_mode:"mixed",          max_floor:5, has_elevator:false},
+  {building:"기숙사_D동",  lat:37.333698,lng:127.262573,mean_kcal:19.13,p10_kcal:15.46,p90_kcal:23.14,risk:"MEDIUM",delivery_mode:"storage",         max_floor:4, has_elevator:false},
+  {building:"기숙사_E동",  lat:37.333157,lng:127.261437,mean_kcal:19.13,p10_kcal:15.57,p90_kcal:22.78,risk:"MEDIUM",delivery_mode:"storage",         max_floor:4, has_elevator:false},
+  {building:"기숙사_A동",  lat:37.334453,lng:127.262710,mean_kcal:19.06,p10_kcal:15.34,p90_kcal:23.04,risk:"MEDIUM",delivery_mode:"storage",         max_floor:8, has_elevator:true},
+  {building:"기숙사_C동",  lat:37.335178,lng:127.263631,mean_kcal:19.03,p10_kcal:15.42,p90_kcal:22.88,risk:"MEDIUM",delivery_mode:"storage",         max_floor:8, has_elevator:true},
+  {building:"기숙사_B동",  lat:37.335130,lng:127.262692,mean_kcal:18.92,p10_kcal:15.25,p90_kcal:22.87,risk:"MEDIUM",delivery_mode:"storage",         max_floor:8, has_elevator:true},
+  {building:"자연과학관",  lat:37.338880,lng:127.266147,mean_kcal:13.59,p10_kcal:9.42, p90_kcal:18.03,risk:"MEDIUM",delivery_mode:"floor_delivery",max_floor:5, has_elevator:true},
+  {building:"학생회관",    lat:37.337189,lng:127.269769,mean_kcal:4.93, p10_kcal:2.75, p90_kcal:6.81, risk:"LOW",   delivery_mode:"storage",         max_floor:4, has_elevator:false},
+  {building:"인문경상관",  lat:37.339748,lng:127.274560,mean_kcal:4.92, p10_kcal:2.52, p90_kcal:6.85, risk:"LOW",   delivery_mode:"storage",         max_floor:4, has_elevator:false},
+  {building:"창업보육센터",lat:37.339062,lng:127.267414,mean_kcal:4.92, p10_kcal:3.55, p90_kcal:6.78, risk:"LOW",   delivery_mode:"storage",         max_floor:4, has_elevator:false},
+  {building:"교양관",      lat:37.339740,lng:127.272058,mean_kcal:4.90, p10_kcal:2.49, p90_kcal:6.78, risk:"LOW",   delivery_mode:"storage",         max_floor:5, has_elevator:true},
+  {building:"후생복지관",  lat:37.337753,lng:127.268621,mean_kcal:4.89, p10_kcal:2.59, p90_kcal:6.72, risk:"LOW",   delivery_mode:"storage",         max_floor:4, has_elevator:false},
 ];
 
 const DELIVERY_STATUS={
@@ -354,9 +440,9 @@ const REGIONS=[
 const regionMarkers=[];
 REGIONS.forEach(r=>{
   const items=DATA.filter(d=>r.keys.includes(d.building));
-  const total=items.reduce((s,d)=>s+d.mean_kcal,0);
+  const total=items.reduce((s,d)=>s+heatKcal(d.mean_kcal),0);
   const col=eColor(total/items.length);
-  const html=`<div style="display:flex;flex-direction:column;align-items:center;cursor:pointer;transform:translate(-50%,-50%)"><div style="width:66px;height:66px;border-radius:50%;background:${col};opacity:.88;border:3px solid #fff;box-shadow:0 2px 12px ${col}66;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center"><div style="font-size:9px;font-weight:700;color:#fff;line-height:1.3">${r.name}</div><div style="font-size:12px;font-weight:900;color:#fff">${total.toFixed(0)}</div><div style="font-size:8px;color:rgba(255,255,255,.85)">kcal</div></div></div>`;
+  const html=`<div style="display:flex;flex-direction:column;align-items:center;cursor:pointer;transform:translate(-50%,-50%)"><div style="width:66px;height:66px;border-radius:50%;background:${col};opacity:.88;border:3px solid #fff;box-shadow:0 2px 12px ${col}66;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center"><div style="font-size:9px;font-weight:700;color:#fff;line-height:1.3">${r.name}</div><div style="font-size:12px;font-weight:900;color:#fff">${total.toFixed(0)}</div><div style="font-size:8px;color:rgba(255,255,255,.85)">${heatState.multiplier>1?"🌡️×"+heatState.multiplier.toFixed(2):"kcal"}</div></div></div>`;
   const m=new naver.maps.Marker({position:new naver.maps.LatLng(r.lat,r.lng),icon:{content:html,anchor:new naver.maps.Point(33,33)}});
   naver.maps.Event.addListener(m,'click',()=>{map.setCenter(new naver.maps.LatLng(r.lat,r.lng));map.setZoom(16);});
   regionMarkers.push(m);
@@ -364,8 +450,18 @@ REGIONS.forEach(r=>{
 
 // 버블 마커
 const bubbleMarkers=[];
+function rebuildBubbles(){
+  bubbleMarkers.forEach(m=>m.setMap(null));
+  bubbleMarkers.length=0;
+  buildBubbles();
+  if(map.getZoom()>=Z_BUBBLE && showBubble){
+    bubbleMarkers.forEach(m=>m.setMap(map));
+  }
+}
+function buildBubbles(){
 DATA.forEach((d,i)=>{
-  const col=eColor(d.mean_kcal);
+  const hk=heatKcal(d.mean_kcal);
+  const col=eColor(hk);
   const st=DELIVERY_STATUS[d.building];
   const stDot=st?`<span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:${STATUS_COL[st.status]};margin-left:3px;vertical-align:middle"></span>`:'';
   const html=`<div style="display:flex;flex-direction:column;align-items:center;cursor:pointer;transform:translate(-50%,-100%)"><div style="background:#fff;border:2px solid ${col};border-radius:7px;padding:3px 8px;white-space:nowrap;position:relative;box-shadow:0 2px 6px ${col}44"><div style="font-size:8px;font-weight:700;color:#555;margin-bottom:1px">${d.building}${stDot}</div><div style="font-size:10px;font-weight:700;color:#111;font-family:monospace">${d.p10_kcal.toFixed(1)}<span style="color:#aaa;font-size:8px">~</span>${d.p90_kcal.toFixed(1)}<span style="color:#aaa;font-size:8px">kcal</span></div><div style="position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);border:3px solid transparent;border-top-color:${col}"></div></div><div style="width:6px;height:6px;border-radius:50%;background:${col};margin-top:1px"></div></div>`;
@@ -373,6 +469,8 @@ DATA.forEach((d,i)=>{
   naver.maps.Event.addListener(m,'click',()=>openDetail(d,i));
   bubbleMarkers.push(m);
 });
+} // end buildBubbles
+buildBubbles();
 
 // 배송상태 마커
 const statusMarkers=[];
@@ -537,6 +635,7 @@ function updateZoom(){
 }
 naver.maps.Event.addListener(map,'zoom_changed',()=>{
   updateZoom();
+updateHeat(); // 열환경 초기화
   // 줌 뱃지 색상 리셋
   const z=map.getZoom();
   const badge=document.getElementById('zoom-badge');
@@ -714,7 +813,8 @@ function openDetail(d,i){
   const st=DELIVERY_STATUS[d.building];
   document.getElementById('dn').textContent=d.building;
   document.getElementById('dm').textContent=MODE_KR[d.delivery_mode];
-  document.getElementById('d-mean').textContent=d.mean_kcal.toFixed(1);
+  const hkd=heatKcal(d.mean_kcal);
+  document.getElementById('d-mean').textContent=hkd.toFixed(1)+(heatState.multiplier>1?' (×'+heatState.multiplier.toFixed(2)+')':'');
   document.getElementById('d-status').innerHTML=st?`<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:12px;background:${STATUS_BG[st.status]};color:${STATUS_COL[st.status]}">${STATUS_KR[st.status]} (${st.count}건)</span>`:`<span style="font-size:10px;color:#aaa">해당없음</span>`;
   document.getElementById('d-bar').style.cssText=`width:${(d.mean_kcal/maxKcal*100).toFixed(0)}%;background:${col};opacity:.85;`;
   document.getElementById('d-p10').textContent=d.p10_kcal.toFixed(1)+' (P10)';
